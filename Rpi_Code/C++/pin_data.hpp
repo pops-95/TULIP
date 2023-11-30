@@ -21,7 +21,7 @@
 #define delay_y_initial  100
 #define  delay_x 1
 #define delay_z 300
-#define delay_c 500
+#define delay_c 1000
 
 #define number_of_pulse_xy 1600//800   //1600
 #define number_of_pulse_zc 800//1600 // 200 //6400

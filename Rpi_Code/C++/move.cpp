@@ -44,7 +44,7 @@ gpio y_limit_right_switch(y_limit_extra,input);
 gpio z_limit_switch(z_limit,input);
 
 
-void origin(){
+void origin(rPosition *curr_pos){
     x_dir.digitalWrite(x_back);
     y_dir.digitalWrite(y_left);
     z_dir.digitalWrite(z_up);
@@ -72,6 +72,8 @@ void origin(){
         }
 
         if(y_limit_left_switch.digitalRead()==0 && x_limit_back_switch.digitalRead()==0 &&z_limit_switch.digitalRead()==0){
+            curr_pos->robot_x=0;
+            curr_pos->robot_y=0;
             break;
         }
     }
@@ -92,7 +94,7 @@ void openclamp(){
 
 void closeclamp(){
     cutter_dir.digitalWrite(clamp_close);
-    for(int i=0;i<0.22*number_of_pulse_zc;i++){
+    for(int i=0;i<0.2*number_of_pulse_zc;i++){
         cutter.digitalWrite(1);
         usleep(delay_z);
         cutter.digitalWrite(0);
@@ -224,8 +226,8 @@ void calculate_xy_movement(rPosition *req_pos,rPosition *prev_pos, mMovement *mo
 }
 
 void update_xy(rPosition *current_pos,rPosition *prev_pos){
-    prev_pos->robot_x=0;
-    prev_pos->robot_y=0;
+    prev_pos->robot_x=current_pos->robot_x;
+    prev_pos->robot_y=current_pos->robot_y;
 
     cout<<"current x= " <<prev_pos->robot_x <<" current y = "<<prev_pos->robot_y<<"\n";
     
@@ -324,5 +326,32 @@ void move_y(mMovement *movement){
 void movexy(mMovement *movement){
     move_x(movement);
     move_y(movement);
+
+}
+
+
+void cut_behind(position *camera_coor,cSteps *steps,rPosition *current_pos,rPosition *prev_pos,mMovement *motor_move){
+    camera_coor->camera_x=camera_coor->camera_x-6;
+    calculate_xy(camera_coor,steps,current_pos);
+    calculate_xy_movement(current_pos,prev_pos,motor_move);
+    movexy(motor_move);
+    usleep(1000000);
+    openclamp();
+    usleep(1000000);
+    move_z(z_down,camera_coor->camera_z);
+    update_xy(current_pos,prev_pos);
+
+    camera_coor->camera_x=camera_coor->camera_x+9.4;
+     calculate_xy(camera_coor,steps,current_pos);
+    calculate_xy_movement(current_pos,prev_pos,motor_move);
+    movexy(motor_move);
+
+    usleep(100000);
+
+    update_xy(current_pos,prev_pos);
+
+    closeclamp();
+    usleep(100000);
+    move_z(z_up,0);
 
 }
