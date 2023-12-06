@@ -90,29 +90,9 @@ if __name__=="__main__":
 
             # Apply GaussianBlur to reduce noise and help contour detection
             blurred = cv.GaussianBlur(gray, (9, 9), 0)
-            # temp = cv.fastNlMeansDenoising(img, h = 7)
-            # Use adaptive thresholding to detect edges
-            # _, thresh = cv.threshold(blurred, 180, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+            
             edges = cv.Canny(blurred,100,150,apertureSize=3)
-            # contours, _ = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-
-            # # Find the contour with the maximum area
-            # max_contour = max(contours, key=cv.contourArea)
-
-            # # Create a bounding box around the maximum contour
-            # x, y, w, h = cv.boundingRect(max_contour)
-            # cv.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            # im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-            # lines = cv.HoughLinesP(
-            #         edges,
-            #         rho=6,
-            #         theta=np.pi / 180,
-            #         threshold=160,
-            #         lines=np.array([]),
-            #         minLineLength=3,
-            #         maxLineGap=3
-            #     )
-            # line_image = draw_lines(img, lines)
+            
             
             cnts = cv.findContours(edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
             cnts = cnts[0] if len(cnts) == 2 else cnts[1]
