@@ -7,11 +7,11 @@ from  utils import *
 
 img=cv.imread("normal.jpg")
 
-img,edges=get_aligned_img(img)
+# img,edges=get_aligned_img(img)
 
 f, (axarr1,axarr2) = plt.subplots(1,2,sharey=True)
 axarr1.imshow(img)
-axarr2.imshow(edges,cmap='gray')
+axarr2.imshow(img,cmap='gray')
 
 # plt.imshow(img,cmap='gray')
 
