@@ -108,7 +108,7 @@ if __name__=="__main__":
                     area=cv.contourArea(cnt)
                     print("Area is = {} ".format(area))
                     print("ratio is = {:.3f} ".format(ratio))
-                    if area >=40000:
+                    if area >=10000:
                         img = cv.drawContours(img, [cnt], -1, (0,255,255), 3)
                         # cv.putText(img, 'Square', (x1, y1), cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
                     
