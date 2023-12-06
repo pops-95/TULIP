@@ -5,7 +5,6 @@ import numpy as np
 from  utils import *
 
 
-
 img=cv.imread("normal.jpg")
 
 img,edges=get_aligned_img(img)
