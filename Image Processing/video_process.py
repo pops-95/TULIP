@@ -37,25 +37,6 @@ temp=rs.temporal_filter()
 align_to=rs.align(rs.stream.color)
 
 
-
-def  onchangefunc(dummyArgument):
-    #initially let onchange be empty
-    # get all trackbar values
-    hue_min=cv.getTrackbarPos(trackbarname="Hue min",winname=windowName)
-    hue_max=cv.getTrackbarPos(trackbarname="Hue max",winname=windowName)
-    sat_min=cv.getTrackbarPos(trackbarname="Saturation min",winname=windowName)
-    sat_max=cv.getTrackbarPos(trackbarname="Saturation max",winname=windowName)
-    val_min=cv.getTrackbarPos(trackbarname="Value min",winname=windowName)
-    val_max=cv.getTrackbarPos(trackbarname="Value max",winname=windowName)
-    print((hue_min,sat_min,val_min),(hue_max,sat_max,val_max))
-
-    # let's create mask
-    minHSV=numpy.array([hue_min,sat_min,val_min])
-    maxHSV=numpy.array([hue_max,sat_max,val_max])
-    mask=cv.inRange(hsvImage,minHSV,maxHSV)   # adjust values of trackbars to get your required color in white and remaining in black
-    cv.imshow("mask",mask)
-
-
 def post_processing_thread(lock):
     global pipe
     while(not stop):
