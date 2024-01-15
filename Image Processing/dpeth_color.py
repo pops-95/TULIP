@@ -21,15 +21,10 @@ for i in range(depth_data.shape[0]):
             continue
         else:
             diff=depth_data[i,j]-thresh
-            diff=diff*100
-            if(diff==0):
-                color_image[i,j,0]=255
-            else:
-                map_value=(diff*127)/thresh
-                map_value=round(map_value)
-                color_image[i,j,0]=127+map_value
-                color_image[i,j,1]=127+map_value
-                color_image[i,j,2]=127+map_value
+            if(diff>0):
+                color_image[i,j,0]=img[i,j,0]
+                color_image[i,j,1]=img[i,j,1]
+                color_image[i,j,2]=img[i,j,2]
 
 
 
