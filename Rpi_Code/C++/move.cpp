@@ -355,3 +355,8 @@ void cut_behind(position *camera_coor,cSteps *steps,rPosition *current_pos,rPosi
     move_z(z_up,0);
 
 }
+
+
+void synchronize(){
+    
+}
