@@ -21,10 +21,10 @@ int main(){
      int zero_y=206;
     int camera_val_y=21;
     int error_x=18;
-    int error_y=35;
+    int error_y=37;
    
 
-    int camera_values[]={-96,85};
+    int camera_values[]={42,-18};
     // int camera_values[]={4,-113};
     // move_x_front();
     move_x_back();
