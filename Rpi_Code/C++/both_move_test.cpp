@@ -24,15 +24,16 @@ int main(){
     int error_y=35;
    
 
-    int camera_values[]={93,106};
+    int camera_values[]={-96,85};
     // int camera_values[]={4,-113};
     // move_x_front();
     move_x_back();
     move_z(z_up,30);
+    usleep(100000);
 
       move_y_left();
 //     int temp_value=move_x_front();
-    usleep(100000);
+    usleep(200000);
     // int prev_x_pulse=move_x_front();
     int full_x=830;
     int prev_x_dis=0;
@@ -45,10 +46,12 @@ int main(){
 
     /////////////////////////////////////
 
-     int dis_x=init_x+error_x+camera_values[0];
-     int dis_y=init_y-zero_y+error_y-camera_values[1];
+     int dis_x=init_x+error_x+camera_values[1];
+     int dis_y=init_y-zero_y+error_y-camera_values[0];
      val.y_steps=(dis_y)*pulse_per_dis_y;
+     cout<<"Pulse required in y is = "<<val.y_steps<<"\n";
      val.x_steps=(13.603*(dis_x))-2620.4;
+     cout<<"Pulse required in x is = "<<val.x_steps<<"\n";
      val.Dirx=x_front;
      val.Diry=y_right;
       move_x(&val);
