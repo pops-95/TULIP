@@ -1,5 +1,8 @@
 #include"gpio.cpp"
+#include <iostream>
 
+
+using namespace std;
 
 typedef struct cSteps{
     float x_steps;
@@ -44,7 +47,7 @@ gpio y_limit_right_switch(y_limit_extra,input);
 gpio z_limit_switch(z_limit,input);
 
 
-void origin(rPosition *curr_pos){
+void origin(){
     x_dir.digitalWrite(x_back);
     y_dir.digitalWrite(y_left);
     z_dir.digitalWrite(z_up);
@@ -72,8 +75,6 @@ void origin(rPosition *curr_pos){
         }
 
         if(y_limit_left_switch.digitalRead()==0 && x_limit_back_switch.digitalRead()==0 &&z_limit_switch.digitalRead()==0){
-            curr_pos->robot_x=0;
-            curr_pos->robot_y=0;
             break;
         }
     }
@@ -94,7 +95,7 @@ void openclamp(){
 
 void closeclamp(){
     cutter_dir.digitalWrite(clamp_close);
-    for(int i=0;i<0.2*number_of_pulse_zc;i++){
+    for(int i=0;i<0.22*number_of_pulse_zc;i++){
         cutter.digitalWrite(1);
         usleep(delay_z);
         cutter.digitalWrite(0);
@@ -226,8 +227,8 @@ void calculate_xy_movement(rPosition *req_pos,rPosition *prev_pos, mMovement *mo
 }
 
 void update_xy(rPosition *current_pos,rPosition *prev_pos){
-    prev_pos->robot_x=current_pos->robot_x;
-    prev_pos->robot_y=current_pos->robot_y;
+    prev_pos->robot_x=0;
+    prev_pos->robot_y=0;
 
     cout<<"current x= " <<prev_pos->robot_x <<" current y = "<<prev_pos->robot_y<<"\n";
     
@@ -261,6 +262,7 @@ void move_z(int dir,float dis){
                 usleep(delay_z);
             }
             else{
+                cout<<"Z pulse= "<<i<<"\n";
                 break;
             }
         }
@@ -269,7 +271,7 @@ void move_z(int dir,float dis){
     else{
             float step=dis/12.5;
             int total_pulse=step*number_of_pulse_zc;
-            for(int i=0;i<total_pulse;i++){
+            for(int i=0;i<1100;i++){
             
                 z_pulse.digitalWrite(1);
                 usleep(delay_z);
@@ -283,8 +285,8 @@ void move_z(int dir,float dis){
 void move_x(mMovement *movement){
      x_dir.digitalWrite(movement->Dirx);
      int limit_value;
-    int pul_x=movement->x_steps*number_of_pulse_xy;
-    for(int i=0;i<=pul_x;i++){
+    int pul_x=movement->x_steps;
+    for(int i=0;i<=(pul_x-100);i++){
             if(movement->Dirx==x_front){
                 limit_value=x_limit_front_switch.digitalRead();
             }
@@ -299,13 +301,21 @@ void move_x(mMovement *movement){
             }
     }
 
+    for(int i=0; i<100;i++){
+         x_pulse.digitalWrite(1);
+         usleep(delay_x);
+        x_pulse.digitalWrite(0);
+        usleep(delay_x);
+    }
+
 }
 
 void move_y(mMovement *movement){
      y_dir.digitalWrite(movement->Diry);
      int limit_value;
-    int pul_y=movement->y_steps*number_of_pulse_xy;
-    for(int i=0;i<=pul_y;i++){
+    // int pul_y=movement->y_steps*number_of_pulse_xy
+    int pul_y=movement->y_steps;
+    for(int i=0;i<=(pul_y-100);i++){
              if(movement->Diry==y_left){
                 limit_value=y_limit_left_switch.digitalRead();
             }
@@ -320,6 +330,13 @@ void move_y(mMovement *movement){
             }
     }
 
+    for(int i=0;i<100;i++){
+         y_pulse.digitalWrite(1);
+        usleep(10000);
+         y_pulse.digitalWrite(0);
+         usleep(10000);
+    }
+
 }
 
 
@@ -329,29 +346,110 @@ void movexy(mMovement *movement){
 
 }
 
-
-void cut_behind(position *camera_coor,cSteps *steps,rPosition *current_pos,rPosition *prev_pos,mMovement *motor_move){
-    camera_coor->camera_x=camera_coor->camera_x-6;
-    calculate_xy(camera_coor,steps,current_pos);
-    calculate_xy_movement(current_pos,prev_pos,motor_move);
-    movexy(motor_move);
-    usleep(1000000);
-    openclamp();
-    usleep(1000000);
-    move_z(z_down,camera_coor->camera_z);
-    update_xy(current_pos,prev_pos);
-
-    camera_coor->camera_x=camera_coor->camera_x+9.4;
-     calculate_xy(camera_coor,steps,current_pos);
-    calculate_xy_movement(current_pos,prev_pos,motor_move);
-    movexy(motor_move);
-
-    usleep(100000);
-
-    update_xy(current_pos,prev_pos);
-
-    closeclamp();
-    usleep(100000);
-    move_z(z_up,0);
+void move_y_left(){
+     
+int diry=y_left; 
+   y_dir.digitalWrite(diry);
+     int limit_value;
+    int pul_y=10*number_of_pulse_xy;
+    for(int i=0;i<=pul_y;i++){
+             if(diry==y_left){
+                limit_value=y_limit_left_switch.digitalRead();
+            }
+            else{
+                limit_value=y_limit_right_switch.digitalRead();
+            }
+            if(limit_value==1){
+                y_pulse.digitalWrite(1);
+                usleep(delay_y);
+                y_pulse.digitalWrite(0);
+                usleep(delay_y);
+            }
+               else{
+              cout<<"Y pulse = "<<i<<"\n";
+              break;
+            }
+    }
 
 }
+
+
+void move_y_right(){
+    
+int diry=y_right; 
+   y_dir.digitalWrite(diry);
+     int limit_value;
+    int pul_y=10*number_of_pulse_xy;
+    for(int i=0;i<=pul_y;i++){
+             if(diry==y_left){
+                limit_value=y_limit_left_switch.digitalRead();
+            }
+            else{
+                limit_value=y_limit_right_switch.digitalRead();
+            }
+            if(limit_value==1){
+                y_pulse.digitalWrite(1);
+                usleep(delay_y);
+                y_pulse.digitalWrite(0);
+                usleep(delay_y);
+            }
+               else{
+              cout<<i<<"\n";
+              break;
+            }
+    }
+}
+
+void  move_x_back(){
+    int dir=x_back;
+      x_dir.digitalWrite(dir);
+     int limit_value;
+    int pul_x=10*number_of_pulse_xy;
+    for(int i=0;i<=pul_x;i++){
+            if(dir==x_front){
+                limit_value=x_limit_front_switch.digitalRead();
+            }
+            else{
+                limit_value=x_limit_back_switch.digitalRead();
+            }
+            if(limit_value==1){
+                x_pulse.digitalWrite(1);
+                usleep(delay_x);
+                x_pulse.digitalWrite(0);
+                usleep(delay_x);
+           }
+             else{
+              cout<<"X pulse is ="<<i<<"\n";
+              break;
+            }
+
+    }
+}
+
+
+int move_x_front(){
+    int dir=x_front;
+      x_dir.digitalWrite(dir);
+     int limit_value;
+    int pul_x=10*number_of_pulse_xy;
+    for(int i=0;i<=pul_x;i++){
+            if(dir==x_front){
+                limit_value=x_limit_front_switch.digitalRead();
+            }
+            else{
+                limit_value=x_limit_back_switch.digitalRead();
+            }
+            if(limit_value==1){
+                x_pulse.digitalWrite(1);
+                usleep(delay_x);
+                x_pulse.digitalWrite(0);
+                usleep(delay_x);
+            }
+
+            else{
+                return i;
+                break;
+            }
+    }
+}
+

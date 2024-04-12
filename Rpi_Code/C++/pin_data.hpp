@@ -17,13 +17,13 @@
 #define x_limit_extra 6
 #define y_limit_extra 16
 
-#define delay_y 1
+#define delay_y 50//50
 #define delay_y_initial  100
-#define  delay_x 1
+#define  delay_x  100 //100
 #define delay_z 300
-#define delay_c 1000
+#define delay_c 500
 
-#define number_of_pulse_xy 1600//800   //1600
+#define number_of_pulse_xy 3200//800   //1600
 #define number_of_pulse_zc 800//1600 // 200 //6400
 #define total_distance  35
 
