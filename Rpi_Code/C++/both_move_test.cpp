@@ -45,7 +45,7 @@ int main(){
 
     /////////////////////////////////////
 
-     int dis_x=init_x+error_x-camera_values[0];
+     int dis_x=init_x+error_x+camera_values[0];
      int dis_y=init_y-zero_y+error_y-camera_values[1];
      val.y_steps=(dis_y)*pulse_per_dis_y;
      val.x_steps=(13.603*(dis_x))-2620.4;
