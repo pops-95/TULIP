@@ -47,6 +47,8 @@ gpio y_limit_right_switch(y_limit_extra,input);
 gpio z_limit_switch(z_limit,input);
 
 
+float pulse_per_dis_y=800/35.33;
+
 void origin(){
     x_dir.digitalWrite(x_back);
     y_dir.digitalWrite(y_left);
@@ -427,7 +429,7 @@ void  move_x_back(){
 }
 
 
-int move_x_front(){
+void move_x_front(){
     int dir=x_front;
       x_dir.digitalWrite(dir);
      int limit_value;
@@ -447,9 +449,24 @@ int move_x_front(){
             }
 
             else{
-                return i;
+                // return i;
                 break;
             }
     }
+}
+
+
+void check_y(mMovement *val,int prev_y,int dis_y){
+    if(prev_y!=0){
+            float y_movement=val->y_steps*(1/pulse_per_dis_y);
+            int actual_movement=prev_y+y_movement;
+            int diff=actual_movement-dis_y;
+            if(diff<0){
+                val->y_steps=(-1)*(diff*pulse_per_dis_y);
+            }
+
+            move_y(val);
+    }
+
 }
 

@@ -5,11 +5,12 @@
 int main(){
     mMovement val;
     srand(time(0));
-    long move_delay=30000000;
-   int val_m= move_x_front();
+    long move_delay=10000000;
+    move_x_back();
+  move_y_left();
    
     // move_y_left();
-    val.Dirx=x_back;
+    val.Diry=y_right;
     int dis=460;
     int init=206;
     int prev_cal=0;
@@ -18,8 +19,8 @@ int main(){
     for(int i=0;i<50;i++){
         dis=dis+0.25;
         cout<<"Dis= "<<dis<<"\n";
-    val.x_steps=0.25*number_of_pulse_xy;
-     move_x(&val);
+    val.y_steps=0.25*number_of_pulse_xy;
+     move_y(&val);
      usleep(move_delay);
     }
 
