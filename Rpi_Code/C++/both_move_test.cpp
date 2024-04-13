@@ -28,7 +28,7 @@ int main(){
    int error_x=-20;//-38;
    int initial_error=0;//-38;
 
-    int camera_values[]={225,129,191,-167,169,-37,95,238};
+    int camera_values[]={42,136,-34,23,-122,56,-165,212};
     // int camera_values[]={4,-113};
     // move_x_front();
     move_x_back();
@@ -161,8 +161,9 @@ int main(){
           cout<<"distance x ="<<dis_x<<"\n";
           cout<<"Pulse required in x is = "<<val.x_steps<<"\n";
 
-    move_x(&val);
-    move_y(&val);
+    // move_x(&val);
+    // move_y(&val);
+    movexy(&val);
     // check_y(&val,prev_y_dis,dis_y);
 
     move_z(z_down,30); 

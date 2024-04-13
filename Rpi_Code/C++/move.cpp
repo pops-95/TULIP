@@ -105,55 +105,55 @@ void closeclamp(){
     }
 }
 
-// void movexy(mMovement *movement){
-//     x_dir.digitalWrite(movement->Dirx);
-//     y_dir.digitalWrite(movement->Diry);
-//     cout<<"x direction " << movement->Dirx <<"\n";
-//      cout<<"y direction " << movement->Diry <<"\n";
-//     int limit_value;
-//     int pul_x=movement->x_steps*number_of_pulse_xy;
-//     int pul_y=movement->y_steps*number_of_pulse_xy;
+void movexy(mMovement *movement){
+    x_dir.digitalWrite(movement->Dirx);
+    y_dir.digitalWrite(movement->Diry);
+    cout<<"x direction " << movement->Dirx <<"\n";
+     cout<<"y direction " << movement->Diry <<"\n";
+    int limit_value;
+    int pul_x=movement->x_steps;
+    int pul_y=movement->y_steps;
 
-//     int maxP;
-//     if(pul_x>pul_y){
-//         maxP=pul_x;
-//     }
-//     else{
-//         maxP=pul_y;
-//     }
-//     for(int i=0;i<=maxP;i++){
-// 		if(i<=pul_y){
-//             if(movement->Diry==y_left){
-//                 limit_value=y_limit_left_switch.digitalRead();
-//             }
-//             else{
-//                 limit_value=y_limit_right_switch.digitalRead();
-//             }
-//             if(limit_value==1){
-//                 y_pulse.digitalWrite(1);
-//                 usleep(delay_y);
-//                 y_pulse.digitalWrite(0);
-//                 usleep(delay_y);
-//             }
+    int maxP;
+    if(pul_x>pul_y){
+        maxP=pul_x;
+    }
+    else{
+        maxP=pul_y;
+    }
+    for(int i=0;i<=maxP;i++){
+		if(i<=pul_y){
+            if(movement->Diry==y_left){
+                limit_value=y_limit_left_switch.digitalRead();
+            }
+            else{
+                limit_value=y_limit_right_switch.digitalRead();
+            }
+            if(limit_value==1){
+                y_pulse.digitalWrite(1);
+                usleep(delay_y);
+                y_pulse.digitalWrite(0);
+                usleep(delay_y);
+            }
 		
-// 		}
+		}
 
-// 		if(i<=pul_x){
-// 			if(movement->Dirx==x_front){
-//                 limit_value=x_limit_front_switch.digitalRead();
-//             }
-//             else{
-//                 limit_value=x_limit_back_switch.digitalRead();
-//             }
-//             if(limit_value==1){
-//                 x_pulse.digitalWrite(1);
-//                 usleep(delay_x);
-//                 x_pulse.digitalWrite(0);
-//                 usleep(delay_x);
-//             }
-// 		}
-//     }
-// }
+		if(i<=pul_x){
+			if(movement->Dirx==x_front){
+                limit_value=x_limit_front_switch.digitalRead();
+            }
+            else{
+                limit_value=x_limit_back_switch.digitalRead();
+            }
+            if(limit_value==1){
+                x_pulse.digitalWrite(1);
+                usleep(delay_x);
+                x_pulse.digitalWrite(0);
+                usleep(delay_x);
+            }
+		}
+    }
+}
 
 void calculate_xy(position *camera_coordinate,cSteps *steps, rPosition *robot_pos){
     float cam_x=41+(camera_coordinate->camera_x);
@@ -342,11 +342,11 @@ void move_y(mMovement *movement){
 }
 
 
-void movexy(mMovement *movement){
-    move_x(movement);
-    move_y(movement);
+// void movexy(mMovement *movement){
+//     move_x(movement);
+//     move_y(movement);
 
-}
+// }
 
 void move_y_left(){
      
