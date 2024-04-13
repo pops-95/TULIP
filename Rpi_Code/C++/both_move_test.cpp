@@ -28,7 +28,7 @@ int main(){
    int error_x=-20;//-38;
    int initial_error=0;//-38;
 
-    int camera_values[]={63,46,-15,-98,-43,220};
+    int camera_values[]={225,129,191,-167,169,-37,95,238};
     // int camera_values[]={4,-113};
     // move_x_front();
     move_x_back();
@@ -44,7 +44,7 @@ int main(){
     int prev_y_dis=0;
     int prev_x_pulse=0;
     int prev_y_pulse=0;
-    long move_delay=10000000;
+    long move_delay=3000000;
 
     mMovement val;
 
@@ -79,7 +79,7 @@ int main(){
 
     /////////////////////////////////////
 
-    for(int i=0;i<=2;i++){
+    for(int i=0;i<4;i++){
          // Generate random number
         // double num = distribution(gen) * 10; // scale to range [-5, 5]
         move_z(z_up,40);
@@ -179,9 +179,10 @@ int main(){
     prev_y_pulse=req_y_pulse;
     prev_y_dis=dis_y;
 
-    error_x=error_x-20;
+    // error_x=error_x-20;
     if((i+1)%2==0){
-        error_y=error_y+10;
+        error_y=error_y+15;
+        error_x=error_x-10;
     }
     
     }
