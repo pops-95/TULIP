@@ -22,7 +22,7 @@ gpio::gpio(int pin,int mode){
 
 
 gpio::~gpio(){
-    cout<<"Calling Descructor "<< endl;
+    // cout<<"Calling Descructor "<< endl;
     closepin();
 }
 
