@@ -1,5 +1,16 @@
 #include"gpio.cpp"
 #include <iostream>
+#include <chrono>
+#include <thread>
+#include <mutex>
+#include<atomic>
+
+// Mutex for synchronization
+std::mutex distanceMutex;
+float pulse_per_dis_x=800/60;
+
+
+int full_x=863;
 
 
 using namespace std;
@@ -29,6 +40,32 @@ typedef struct rPosition{
     float robot_z;
 };
 
+typedef struct Distances{
+    float x_distance;
+    float y_distance;
+};
+
+typedef struct Initial_Measeures{
+    int y_pulse_right;
+    int y_pulse_left;
+    int x_pulse_front;
+    int x_pulse_back;
+    float y_left_extreme_distance;
+    float y_right_extreme_distance;
+    float x_front_extreme_distance;
+    float x_back_extreme_distance;
+
+};
+
+struct ThreadData {
+    pthread_mutex_t mtx; // Mutex for synchronization
+    int stopFlag; // Flag to stop the thread
+    Distances dis;
+};
+
+std::atomic<int> sharedData_x; // Shared data variable
+std::atomic<int> sharedData_y; // Shared data variable
+
 gpio x_pulse(pulse_x,output);
 gpio y_pulse(pulse_y,output);
 gpio z_pulse(pulse_z,output);
@@ -46,8 +83,11 @@ gpio y_limit_left_switch(y_limit,input);
 gpio y_limit_right_switch(y_limit_extra,input);
 gpio z_limit_switch(z_limit,input);
 
+gpio x_echo(x_echo_pin,input);
+gpio x_trigger(x_trigger_pin,output);
+gpio y_echo(y_echo_pin,input);
+gpio y_trigger(y_trigger_pin,output);
 
-float pulse_per_dis_y=800/35.33;
 
 void origin(){
     x_dir.digitalWrite(x_back);
@@ -55,28 +95,28 @@ void origin(){
     z_dir.digitalWrite(z_up);
 
     for (int j=0;j<10*number_of_pulse_xy;j++){
-        if(y_limit_left_switch.digitalRead()){
+        if(y_limit_left_switch.digitalRead()==0){
             y_pulse.digitalWrite(1);
             usleep(delay_y);
             y_pulse.digitalWrite(0);
             usleep(delay_y);
         }
 
-          if(x_limit_back_switch.digitalRead()){
+          if(x_limit_back_switch.digitalRead()==0){
             x_pulse.digitalWrite(1);
             usleep(delay_x);
             x_pulse.digitalWrite(0);
             usleep(delay_x);
         }
 
-          if(z_limit_switch.digitalRead()){
+          if(z_limit_switch.digitalRead()==0){
             z_pulse.digitalWrite(1);
             usleep(delay_z);
             z_pulse.digitalWrite(0);
             usleep(delay_z);
         }
 
-        if(y_limit_left_switch.digitalRead()==0 && x_limit_back_switch.digitalRead()==0 &&z_limit_switch.digitalRead()==0){
+        if(y_limit_left_switch.digitalRead()==1 && x_limit_back_switch.digitalRead()==1 &&z_limit_switch.digitalRead()==1){
             break;
         }
     }
@@ -87,7 +127,7 @@ void origin(){
 
 void openclamp(){
     cutter_dir.digitalWrite(clamp_open);
-    for(int i=0;i<0.2*number_of_pulse_zc;i++){
+    for(int i=0;i<0.3*number_of_pulse_zc;i++){
         cutter.digitalWrite(1);
         usleep(delay_c);
         cutter.digitalWrite(0);
@@ -97,7 +137,7 @@ void openclamp(){
 
 void closeclamp(){
     cutter_dir.digitalWrite(clamp_close);
-    for(int i=0;i<0.22*number_of_pulse_zc;i++){
+    for(int i=0;i<0.6*number_of_pulse_zc;i++){
         cutter.digitalWrite(1);
         usleep(delay_z);
         cutter.digitalWrite(0);
@@ -105,55 +145,55 @@ void closeclamp(){
     }
 }
 
-void movexy(mMovement *movement){
-    x_dir.digitalWrite(movement->Dirx);
-    y_dir.digitalWrite(movement->Diry);
-    cout<<"x direction " << movement->Dirx <<"\n";
-     cout<<"y direction " << movement->Diry <<"\n";
-    int limit_value;
-    int pul_x=movement->x_steps;
-    int pul_y=movement->y_steps;
+// void movexy(mMovement *movement){
+//     x_dir.digitalWrite(movement->Dirx);
+//     y_dir.digitalWrite(movement->Diry);
+//     cout<<"x direction " << movement->Dirx <<"\n";
+//      cout<<"y direction " << movement->Diry <<"\n";
+//     int limit_value;
+//     int pul_x=movement->x_steps*number_of_pulse_xy;
+//     int pul_y=movement->y_steps*number_of_pulse_xy;
 
-    int maxP;
-    if(pul_x>pul_y){
-        maxP=pul_x;
-    }
-    else{
-        maxP=pul_y;
-    }
-    for(int i=0;i<=maxP;i++){
-		if(i<=pul_y){
-            if(movement->Diry==y_left){
-                limit_value=y_limit_left_switch.digitalRead();
-            }
-            else{
-                limit_value=y_limit_right_switch.digitalRead();
-            }
-            if(limit_value==1){
-                y_pulse.digitalWrite(1);
-                usleep(delay_y);
-                y_pulse.digitalWrite(0);
-                usleep(delay_y);
-            }
+//     int maxP;
+//     if(pul_x>pul_y){
+//         maxP=pul_x;
+//     }
+//     else{
+//         maxP=pul_y;
+//     }
+//     for(int i=0;i<=maxP;i++){
+// 		if(i<=pul_y){
+//             if(movement->Diry==y_left){
+//                 limit_value=y_limit_left_switch.digitalRead();
+//             }
+//             else{
+//                 limit_value=y_limit_right_switch.digitalRead();
+//             }
+//             if(limit_value==1){
+//                 y_pulse.digitalWrite(1);
+//                 usleep(delay_y);
+//                 y_pulse.digitalWrite(0);
+//                 usleep(delay_y);
+//             }
 		
-		}
+// 		}
 
-		if(i<=pul_x){
-			if(movement->Dirx==x_front){
-                limit_value=x_limit_front_switch.digitalRead();
-            }
-            else{
-                limit_value=x_limit_back_switch.digitalRead();
-            }
-            if(limit_value==1){
-                x_pulse.digitalWrite(1);
-                usleep(delay_x);
-                x_pulse.digitalWrite(0);
-                usleep(delay_x);
-            }
-		}
-    }
-}
+// 		if(i<=pul_x){
+// 			if(movement->Dirx==x_front){
+//                 limit_value=x_limit_front_switch.digitalRead();
+//             }
+//             else{
+//                 limit_value=x_limit_back_switch.digitalRead();
+//             }
+//             if(limit_value==1){
+//                 x_pulse.digitalWrite(1);
+//                 usleep(delay_x);
+//                 x_pulse.digitalWrite(0);
+//                 usleep(delay_x);
+//             }
+// 		}
+//     }
+// }
 
 void calculate_xy(position *camera_coordinate,cSteps *steps, rPosition *robot_pos){
     float cam_x=41+(camera_coordinate->camera_x);
@@ -271,9 +311,9 @@ void move_z(int dir,float dis){
     }
 
     else{
-            float step=dis/12.5;
+            float step=dis/(125*2);
             int total_pulse=step*number_of_pulse_zc;
-            for(int i=0;i<1100;i++){
+            for(int i=0;i<total_pulse;i++){
             
                 z_pulse.digitalWrite(1);
                 usleep(delay_z);
@@ -295,7 +335,7 @@ void move_x(mMovement *movement){
             else{
                 limit_value=x_limit_back_switch.digitalRead();
             }
-            if(limit_value==1){
+            if(limit_value==0){
                 x_pulse.digitalWrite(1);
                 usleep(delay_x);
                 x_pulse.digitalWrite(0);
@@ -324,7 +364,7 @@ void move_y(mMovement *movement){
             else{
                 limit_value=y_limit_right_switch.digitalRead();
             }
-            if(limit_value==1){
+            if(limit_value==0){
                 y_pulse.digitalWrite(1);
                 usleep(delay_y);
                 y_pulse.digitalWrite(0);
@@ -342,11 +382,11 @@ void move_y(mMovement *movement){
 }
 
 
-// void movexy(mMovement *movement){
-//     move_x(movement);
-//     move_y(movement);
+void movexy(mMovement *movement){
+    move_x(movement);
+    move_y(movement);
 
-// }
+}
 
 void move_y_left(){
      
@@ -355,13 +395,14 @@ int diry=y_left;
      int limit_value;
     int pul_y=10*number_of_pulse_xy;
     for(int i=0;i<=pul_y;i++){
-             if(diry==y_left){
-                limit_value=y_limit_left_switch.digitalRead();
-            }
-            else{
-                limit_value=y_limit_right_switch.digitalRead();
-            }
-            if(limit_value==1){
+            cout<<"current y value= "<<y_limit_left_switch.digitalRead()<<endl;
+            //  if(diry==y_left){
+            //     limit_value=y_limit_left_switch.digitalRead();
+            // }
+            // else{
+            //     limit_value=y_limit_right_switch.digitalRead();
+            // }
+            if(y_limit_left_switch.digitalRead()==0 &&  y_limit_right_switch.digitalRead()==0){
                 y_pulse.digitalWrite(1);
                 usleep(delay_y);
                 y_pulse.digitalWrite(0);
@@ -389,7 +430,7 @@ int diry=y_right;
             else{
                 limit_value=y_limit_right_switch.digitalRead();
             }
-            if(limit_value==1){
+            if(limit_value==0){
                 y_pulse.digitalWrite(1);
                 usleep(delay_y);
                 y_pulse.digitalWrite(0);
@@ -414,7 +455,8 @@ void  move_x_back(){
             else{
                 limit_value=x_limit_back_switch.digitalRead();
             }
-            if(limit_value==1){
+            // cout<<limit_value;
+            if(limit_value==0){
                 x_pulse.digitalWrite(1);
                 usleep(delay_x);
                 x_pulse.digitalWrite(0);
@@ -431,9 +473,9 @@ void  move_x_back(){
 
 void move_x_front(){
     int dir=x_front;
-      x_dir.digitalWrite(dir);
+    x_dir.digitalWrite(dir);
      int limit_value;
-    int pul_x=10*number_of_pulse_xy;
+    int pul_x=100*number_of_pulse_xy;
     for(int i=0;i<=pul_x;i++){
             if(dir==x_front){
                 limit_value=x_limit_front_switch.digitalRead();
@@ -441,7 +483,7 @@ void move_x_front(){
             else{
                 limit_value=x_limit_back_switch.digitalRead();
             }
-            if(limit_value==1){
+            if(limit_value==0){
                 x_pulse.digitalWrite(1);
                 usleep(delay_x);
                 x_pulse.digitalWrite(0);
@@ -455,18 +497,292 @@ void move_x_front(){
     }
 }
 
-
-void check_y(mMovement *val,int prev_y,int dis_y){
-    if(prev_y!=0){
-            float y_movement=val->y_steps*(1/pulse_per_dis_y);
-            int actual_movement=prev_y+y_movement;
-            int diff=actual_movement-dis_y;
-            if(diff<0){
-                val->y_steps=(-1)*(diff*pulse_per_dis_y);
-            }
-
-            move_y(val);
+void store_leaves_belt(int current_pos){
+    int dir=x_front;
+    x_dir.digitalWrite(dir);
+    int diff=863-current_pos;
+    int steps=diff*pulse_per_dis_x;
+    for (int i=0;i<steps;i++){
+         x_pulse.digitalWrite(1);
+                usleep(delay_x);
+                x_pulse.digitalWrite(0);
+                usleep(delay_x);
     }
 
 }
+
+
+void set_trigger_x(){
+    // cout<<"Pin trigger"<<endl;
+    x_trigger.digitalWrite(1);
+    // y_trigger.digitalWrite(1);
+    usleep(10);
+    x_trigger.digitalWrite(0);
+    // y_trigger.digitalWrite(0);
+}
+
+void set_trigger_y(){
+    // cout<<"Pin trigger"<<endl;
+    // x_trigger.digitalWrite(1);
+    y_trigger.digitalWrite(1);
+    usleep(10);
+    // x_trigger.digitalWrite(0);
+    y_trigger.digitalWrite(0);
+}
+
+
+void *MeasureDistance_X(void *arg){
+    struct ThreadData *data = (struct ThreadData *)arg;
+    float dis_array[10];
+    int a;
+    float sum=0;
+    while(true){
+        set_trigger_x();
+    // Waiting for echo
+    auto start = std::chrono::steady_clock::now();
+    while ( x_echo.digitalRead()== 0) {
+        // cout<<"Inside"<<endl;
+        auto elapsed = std::chrono::steady_clock::now() - start;
+        if (std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() > 50000) {
+            // Timeout after 50ms
+            cout<<"Timeout at x"<<endl;
+        }
+    }
+    auto echoStart = std::chrono::steady_clock::now();
+
+    // Measuring the duration of echo
+    while (x_echo.digitalRead()== 1);
+    auto echoEnd = std::chrono::steady_clock::now();
+
+    // Calculating distance
+    auto echoDuration = std::chrono::duration_cast<std::chrono::microseconds>(echoEnd - echoStart).count();
+     {
+            pthread_mutex_lock(&data->mtx);
+            // cout<<"measured"<<endl;
+            data->dis.x_distance=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
+            a=a+1;
+            sum=sum+dis_array[a];
+
+            pthread_mutex_unlock(&data->mtx);
+            // sharedData_x.store(42,std::memory_order_relaxed);
+             
+        }
+
+    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+   
+    }
+}
+
+
+void MeasureDistance_Y(){
+    
+        set_trigger_y();
+    // Waiting for echo
+    auto start = std::chrono::steady_clock::now();
+    while ( y_echo.digitalRead()== 0) {
+        auto elapsed = std::chrono::steady_clock::now() - start;
+        if (std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() > 50000) {
+            // Timeout after 50ms
+            cout<<"Timeout at y"<<endl;
+            break;
+        }
+    }
+    auto echoStart = std::chrono::steady_clock::now();
+
+    // Measuring the duration of echo
+    while (y_echo.digitalRead()== 1);
+    auto echoEnd = std::chrono::steady_clock::now();
+
+    // Calculating distance
+    auto echoDuration = std::chrono::duration_cast<std::chrono::microseconds>(echoEnd - echoStart).count();
+     {
+            // std::lock_guard<std::mutex> lock(distanceMutex);
+            float dis=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
+        }
+    }
+    
+
+// void Measure_distance(){
+//     while(1){
+//          MeasureDistance_X();
+//     MeasureDistance_Y();
+//     }
+   
+    
+
+
+
+// void movement_xy(rPosition *val){
+//     bool x_position_reach=false;
+//     bool y_position_reach=false;
+
+//     while(x_position_reach==false || y_position_reach==false){
+//         if(x_position_reach==false){
+//             x_pulse.digitalWrite(1);
+//             usleep(delay_x);
+//             x_pulse.digitalWrite(0);
+//             usleep(delay_x);
+//             if((val->robot_x+reach_threshold)<=MeasureDistance_X<=(val->robot_x-reach_threshold)){
+//                 x_position_reach=true;
+//             }
+//         }
+
+//         if(y_position_reach==false){
+//             y_pulse.digitalWrite(1);
+//             usleep(delay_y);
+//             y_pulse.digitalWrite(0);
+//             usleep(delay_y);
+//             if((val->robot_y+reach_threshold)<=MeasureDistance_Y<=(val->robot_y-reach_threshold)){
+//                 y_position_reach=true;
+//             }
+//         }
+//     }
+// }
+
+
+// void movement_x(rPosition *val, Distances *dis){
+//     int minDistance=val->robot_x-reach_threshold;
+//     int maxDistance=val->robot_x+reach_threshold;
+//     bool reach_position=false;
+//     MeasureDistance_X(dis);
+//     cout<<"Current X Position="<<dis->x_distance<<endl;
+//     if(dis->x_distance<val->robot_x){
+//         x_dir.digitalWrite(x_back);
+//     }
+//     else{
+//         x_dir.digitalWrite(x_front);
+//     }
+//     while(!reach_position){
+        
+//         if(minDistance<=dis->x_distance&& dis->x_distance<=maxDistance){
+//                 // cout<<"Inside";
+//                 cout<<"Reached at= "<<dis->x_distance<<endl;
+//                 reach_position=true;
+//                 break;
+//             }
+//         else{ 
+
+//             x_pulse.digitalWrite(1);
+//             usleep(delay_x);
+//             x_pulse.digitalWrite(0);
+//             usleep(delay_x);
+//         }
+//         MeasureDistance_X(dis);
+//     }
+// }
+
+
+// void movement_y(rPosition *val,Distances *dis){
+//     int minDistance=val->robot_y-reach_threshold;
+//     int maxDistance=val->robot_y+reach_threshold;
+//     bool reach_position=false;
+//     MeasureDistance_Y(dis);
+//     cout<<"Current Position= "<<dis->y_distance<<endl;
+//     if(dis->y_distance<val->robot_y){
+//         y_dir.digitalWrite(y_right);
+//     }
+//     else{
+//         y_dir.digitalWrite(y_left);
+//     }
+
+//     while(!reach_position){
+        
+//         if(minDistance<=dis->y_distance&& dis->y_distance<=maxDistance){
+//                 cout<<"Reached at= "<<dis->y_distance<<endl;
+//                 reach_position=true;
+//                 break;
+//             }
+//         else{
+//             //Write condition for limit switch
+//             y_pulse.digitalWrite(1);
+//             usleep(delay_y);
+//             y_pulse.digitalWrite(0);
+//             usleep(delay_y);
+//         }
+//         MeasureDistance_Y(dis);
+        
+//     }
+// }
+
+// void bootup_process(Initial_Measeures *val,Distances *dis){
+//     origin();
+//     int limit_value;
+//     x_dir.digitalWrite(x_front);
+//     for(int i=0;i<10*number_of_pulse_xy;i++){
+//             limit_value=x_limit_front_switch.digitalRead();
+
+//             if(limit_value==1){
+//                 x_pulse.digitalWrite(1);
+//                 usleep(delay_x);
+//                 x_pulse.digitalWrite(0);
+//                 usleep(delay_x);
+//             }
+//             else{
+//                 val->x_front_extreme_distance=MeasureDistance_X();
+//                 val->x_pulse_front=i;
+//                 break;
+//             }
+//   }
+//      y_dir.digitalWrite(y_right);
+//     for(int i=0;i<10*number_of_pulse_xy;i++){
+//             limit_value=y_limit_right_switch.digitalRead();
+
+//             if(limit_value==1){
+//                 y_pulse.digitalWrite(1);
+//                 usleep(delay_y);
+//                 y_pulse.digitalWrite(0);
+//                 usleep(delay_y);
+//             }
+//             else{
+//                 val->y_right_extreme_distance=MeasureDistance_Y();
+//                 val->y_pulse_right=i;
+//                 break;
+//             }
+//     }
+
+//     x_dir.digitalWrite(x_back);
+//     for(int i=0;i<10*number_of_pulse_xy;i++){
+//             limit_value=x_limit_back_switch.digitalRead();
+
+//             if(limit_value==1){
+//                 x_pulse.digitalWrite(1);
+//                 usleep(delay_x);
+//                 x_pulse.digitalWrite(0);
+//                 usleep(delay_x);
+//             }
+//             else{
+//                 val->x_back_extreme_distance=MeasureDistance_X();
+//                 val->x_pulse_back=i;
+//                 break;
+//             }
+//   }
+
+
+//       y_dir.digitalWrite(y_left);
+//     for(int i=0;i<10*number_of_pulse_xy;i++){
+//             limit_value=y_limit_left_switch.digitalRead();
+
+//             if(limit_value==1){
+//                 y_pulse.digitalWrite(1);
+//                 usleep(delay_y);
+//                 y_pulse.digitalWrite(0);
+//                 usleep(delay_y);
+//             }
+//             else{
+//                 val->y_left_extreme_distance=MeasureDistance_Y();
+//                 val->y_pulse_left=i;
+//                 break;
+//             }
+//     }
+
+
+// cout<<"Pulse X Front = " <<val->x_pulse_front <<" "<<"Front Extreme Distance =" << val->x_front_extreme_distance<<endl;
+// cout<<"Pulse Y Right = "<<val->y_pulse_right <<" "<<"Right Distance = "<<val->y_right_extreme_distance;
+
+// cout<<"Pulse X Back = " <<val->x_pulse_back <<" "<<"Back Extreme Distance =" << val->x_back_extreme_distance<<endl;
+// cout<<"Pulse Y Left = "<<val->y_pulse_left <<" "<<"Left Distance = "<<val->y_left_extreme_distance;
+
+// }
+
+
 

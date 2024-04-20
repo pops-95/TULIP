@@ -11,11 +11,17 @@
 #define pulse_c 23
 #define dir_c   24
 
-#define x_limit 10
+#define x_limit 22
 #define y_limit 9
 #define z_limit 11
-#define x_limit_extra 6
+#define x_limit_extra 25
 #define y_limit_extra 16
+
+
+#define x_echo_pin 5
+#define x_trigger_pin 6
+#define y_echo_pin 13
+#define y_trigger_pin 19
 
 #define delay_y 50//50
 #define delay_y_initial  100
@@ -37,8 +43,8 @@
 #define z_up  1
 #define z_down 0
 
-#define clamp_open 1
-#define clamp_close 0
+#define clamp_open 0
+#define clamp_close 1
 
 //mode=1 (output), mode=0 (input)
 #define output 1
@@ -49,3 +55,5 @@
 #define GPIO_OPEN 2
 #define ERRO_WRITING 3
 #define ERROR_READING 4
+
+#define reach_threshold 5
