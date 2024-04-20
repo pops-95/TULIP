@@ -20,6 +20,11 @@ int main(int argc, char *argv[]){
     thread x_distance_thread(calculate_x_distance,ref(dis));
     thread y_distance_thread(calculate_y_distance,ref(dis));
 
+
+    // while(1){
+    //     cout<<"X distance= "<< dis.x_distance << "  Y Distance= "<<dis.y_distance<<endl;
+    // }
+
     int camera_values={};
     int no_values=(sizeof(camera_values)/sizeof(camera_values[0]))/3;
     cout<<"No of values="<<no_values<<endl;
