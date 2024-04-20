@@ -531,21 +531,16 @@ void set_trigger_y(){
 }
 
 
-void *MeasureDistance_X(void *arg){
-    struct ThreadData *data = (struct ThreadData *)arg;
-    float dis_array[10];
-    int a;
-    float sum=0;
-    while(true){
-        set_trigger_x();
+float MeasureDistance_X(){
+         set_trigger_x();
     // Waiting for echo
     auto start = std::chrono::steady_clock::now();
     while ( x_echo.digitalRead()== 0) {
-        // cout<<"Inside"<<endl;
         auto elapsed = std::chrono::steady_clock::now() - start;
         if (std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() > 50000) {
             // Timeout after 50ms
-            cout<<"Timeout at x"<<endl;
+            cout<<"Timeout at y"<<endl;
+            break;
         }
     }
     auto echoStart = std::chrono::steady_clock::now();
@@ -557,24 +552,14 @@ void *MeasureDistance_X(void *arg){
     // Calculating distance
     auto echoDuration = std::chrono::duration_cast<std::chrono::microseconds>(echoEnd - echoStart).count();
      {
-            pthread_mutex_lock(&data->mtx);
-            // cout<<"measured"<<endl;
-            data->dis.x_distance=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
-            a=a+1;
-            sum=sum+dis_array[a];
-
-            pthread_mutex_unlock(&data->mtx);
-            // sharedData_x.store(42,std::memory_order_relaxed);
-             
+            // std::lock_guard<std::mutex> lock(distanceMutex);
+            float dis=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
+            return dis;
         }
 
-    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
-   
-    }
+        usleep(10000);
 }
-
-
-void MeasureDistance_Y(){
+float MeasureDistance_Y(){
     
         set_trigger_y();
     // Waiting for echo
@@ -598,7 +583,10 @@ void MeasureDistance_Y(){
      {
             // std::lock_guard<std::mutex> lock(distanceMutex);
             float dis=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
+            return dis;
         }
+
+        usleep(10000);
     }
     
 
