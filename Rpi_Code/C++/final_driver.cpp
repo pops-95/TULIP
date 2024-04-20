@@ -28,13 +28,15 @@ int main(int argc, char *argv[]){
     int camera_values={};
     int no_values=(sizeof(camera_values)/sizeof(camera_values[0]))/3;
     cout<<"No of values="<<no_values<<endl;
+    
+    origin();
 
     for(int i=0;i<no_values;i++){
         cam_pos.camera_x=camera_values[(i*3)+1];
         cam_pos.camera_y=camera_values[i*3];
         cam_pos.camera_z=camera_values[(i*3)+2];
 
-        origin();
+        
 
         calculate_xy(cam_pos,bot_pos,move_val);
         move_x_sonar(move_val,dis);
