@@ -57,3 +57,17 @@
 #define ERROR_READING 4
 
 #define reach_threshold 5
+
+int init_y=461;
+int init_x=-263;
+int zero_x=212;
+
+int error_x_posve=0;
+int error_x_negve=0;
+int error_y_posve=0;
+int error_y_negve=0;
+int error_y=0;//10;
+int error_x=-20;//-38;
+int new_error_x=-20;
+int new_error_y=-20;
+int initial_error=0;//-38;

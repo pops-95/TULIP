@@ -22,10 +22,11 @@ typedef struct cSteps{
 };
 
 typedef struct mMovement{
-    float x_steps;
+    float x_distance;
     int Dirx;
-    float y_steps;
+    float y_distance;
     int Diry;
+    float z_steps;
 };
 
 typedef struct position{
@@ -39,6 +40,11 @@ typedef struct rPosition{
     float robot_y;
     float robot_z;
 };
+
+typedef struct prevPosition{
+    int prev_x;
+    int prev_y;
+}
 
 typedef struct Distances{
     float x_distance;
@@ -145,100 +151,8 @@ void closeclamp(){
     }
 }
 
-// void movexy(mMovement *movement){
-//     x_dir.digitalWrite(movement->Dirx);
-//     y_dir.digitalWrite(movement->Diry);
-//     cout<<"x direction " << movement->Dirx <<"\n";
-//      cout<<"y direction " << movement->Diry <<"\n";
-//     int limit_value;
-//     int pul_x=movement->x_steps*number_of_pulse_xy;
-//     int pul_y=movement->y_steps*number_of_pulse_xy;
-
-//     int maxP;
-//     if(pul_x>pul_y){
-//         maxP=pul_x;
-//     }
-//     else{
-//         maxP=pul_y;
-//     }
-//     for(int i=0;i<=maxP;i++){
-// 		if(i<=pul_y){
-//             if(movement->Diry==y_left){
-//                 limit_value=y_limit_left_switch.digitalRead();
-//             }
-//             else{
-//                 limit_value=y_limit_right_switch.digitalRead();
-//             }
-//             if(limit_value==1){
-//                 y_pulse.digitalWrite(1);
-//                 usleep(delay_y);
-//                 y_pulse.digitalWrite(0);
-//                 usleep(delay_y);
-//             }
-		
-// 		}
-
-// 		if(i<=pul_x){
-// 			if(movement->Dirx==x_front){
-//                 limit_value=x_limit_front_switch.digitalRead();
-//             }
-//             else{
-//                 limit_value=x_limit_back_switch.digitalRead();
-//             }
-//             if(limit_value==1){
-//                 x_pulse.digitalWrite(1);
-//                 usleep(delay_x);
-//                 x_pulse.digitalWrite(0);
-//                 usleep(delay_x);
-//             }
-// 		}
-//     }
-// }
-
-void calculate_xy(position *camera_coordinate,cSteps *steps, rPosition *robot_pos){
-    float cam_x=41+(camera_coordinate->camera_x);
-	float cam_y=36+(camera_coordinate->camera_y);
-
-    float frame_robot_x=20;
-    float frame_robot_y=17;
-
-    float error_x=0;
-    float error_y=0;;
-
-    // if(camera_coordinate->camera_x < 0 and camera_coordinate->camera_y<0){
-    //     error_x=-3;
-    //     error_y=-3;
-    // }
-
-    //  if(camera_coordinate->camera_x < 0 and camera_coordinate->camera_y > 0){
-    //     error_x=-8;
-    //     error_y=2;
-    // }
-
-    //  if(camera_coordinate->camera_x > 0 and camera_coordinate->camera_y>0){
-    //     error_x=-4;
-    //     error_y=1;
-    // }
-
-    cout<<"Error x = " <<error_x<<"\n";
-    cout<<"Error y = " <<error_y<<"\n";
 
 
-	// float robot_x=cam_x-10-20+8-1-10+1+19-20-4.5+8+error_x;
-    float robot_x=cam_x-frame_robot_x+error_x;
-	// float robot_y=cam_y-6-17-8+1+6.5+2-1+1+7+2-1-5+4+error_y;
-    float robot_y=cam_y-frame_robot_y+error_y;
-    cout<<"Robot X= " <<robot_x <<"\n";
-    cout<<"Robot Y= " <<robot_y <<"\n";
-    robot_pos->robot_x=robot_x;
-    robot_pos->robot_y=robot_y;
-
-    float step_x=robot_x/12.64;
-	float step_y=robot_y/12.22;
-
-    steps->x_steps=step_x;
-    steps->y_steps=step_y;
-}
 
 void calculate_xy_movement(rPosition *req_pos,rPosition *prev_pos, mMovement *movement){
     if(req_pos->robot_x>prev_pos->robot_x){
@@ -675,6 +589,83 @@ void calculate_y_distance(Distances& dis){
     }
     
 }
+
+void calculate_xy(position& cam_val,rPosition& bot_val,mMovement& move){
+    int dis_x=init_x-cam_val.camera_x;
+     if(dis_x<0){
+          dis_x=dis_x*(-1);
+     }
+
+     move.x_distance=dis_x+zero_x+error_x+new_error_x;
+
+    move.y_distance=init_y+error_y-cam_val.camera_y+new_error_y;
+    
+    if(move.x_distance>bot_val.robot_x){
+            move.Dirx=x_back;
+    }
+    else{
+            move.Dirx=x_front;
+    }
+
+        if(move.y_distance>bot_val.robot_y){
+            move.Diry=y_right;
+    }
+    else{
+            move.Diry=y_left;
+    }
+
+    move.z_steps=cam_val.camera_z-1060;
+    
+}
+
+
+void move_x_sonar(mMovement& val,Distances& dis){
+    x_dir.digitalWrite(val.Dirx);
+    int minmumDistance=val.x_distance-reach_threshold;
+    int maximumDistane=val.x_distance+reach_threshold;
+    
+    
+    bool reached=false;
+    while(!reached){
+        if(minmumDistance<=dis.x_distance && maximumDistane >=dis.x_distance){
+            reached=true;
+            break;
+        }
+        else{
+            x_pulse.digitalWrite(1);
+            usleep(delay_x);
+            x_pulse.digitalWrite(0);
+            usleep(delay_x);
+        }
+    }
+
+}
+
+
+void move_y_sonar(mMovement& val,Distances& dis){
+    y_dir.digitalWrite(val.Diry);
+    int minmumDistance=val.y_distance-reach_threshold;
+    int maximumDistane=val.y_distance+reach_threshold;
+    
+    
+    bool reached=false;
+    while(!reached){
+        if(minmumDistance<=dis.y_distance && maximumDistane >=dis.y_distance){
+            reached=true;
+            break;
+        }
+        else{
+            y_pulse.digitalWrite(1);
+            usleep(delay_y);
+            y_pulse.digitalWrite(0);
+            usleep(delay_y);
+        }
+    }
+
+}
+
+
+
 
 
 
