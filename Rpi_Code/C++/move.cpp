@@ -858,6 +858,48 @@ void calculate_distances(Distances& dis){
 }
 
 
+void check_accuracy(mMovement& move_val,Distances& val,Errordata& data ){
+	float acc_err_x=move_val.x_distance-val.x_distance;
+    // if(acc_err_x<0){
+    //     acc_err_x=acc_err_x*(-1);
+    // }
+    data.accu_x=acc_err_x;
+
+    float acc_err_y=move_val.y_distance-val.y_distance;
+    // if(acc_err_y<0){
+    //     acc_err_y=acc_err_y*(-1);
+    // }
+
+    data.accu_y=acc_err_y;
+
+}
+
+
+void fine_tuning_xy(Errordata& data,mMovement& move_val){
+    if(data.accu_x>0){
+        move_val.Dirx=x_back;
+    }
+
+    else{
+        move_val.Dirx=x_front;
+    }
+
+    if(data.accu_y>0){
+        move_val.Diry=y_right;
+    }
+
+    else{
+        move_val.Diry=y_left;
+    }
+
+    move_val.x_steps=data.accu_x;
+    move_val.y_steps=data.accu_y;
+
+}   
+
+
+
+
 
 
 
