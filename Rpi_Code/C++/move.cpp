@@ -7,6 +7,8 @@
 
 // Mutex for synchronization
 std::mutex distanceMutex;
+std:: mutex y_distance;
+
 float pulse_per_dis_x=800/60;
 
 
@@ -24,7 +26,9 @@ typedef struct cSteps{
 typedef struct mMovement{
     float x_distance;
     int Dirx;
+    float x_steps;
     float y_distance;
+    float y_steps;
     int Diry;
     float z_steps;
 };
@@ -44,7 +48,7 @@ typedef struct rPosition{
 typedef struct prevPosition{
     int prev_x;
     int prev_y;
-}
+};
 
 typedef struct Distances{
     float x_distance;
@@ -446,6 +450,9 @@ void set_trigger_y(){
 
 
 float MeasureDistance_X(){
+    unique_lock<mutex> lock(distanceMutex,defer_lock);
+        lock.lock();
+    
          set_trigger_x();
     // Waiting for echo
     auto start = std::chrono::steady_clock::now();
@@ -453,7 +460,8 @@ float MeasureDistance_X(){
         auto elapsed = std::chrono::steady_clock::now() - start;
         if (std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() > 50000) {
             // Timeout after 50ms
-            cout<<"Timeout at y"<<endl;
+            // cout<<"Timeout at x"<<endl;
+            return -1;
             break;
         }
     }
@@ -467,11 +475,14 @@ float MeasureDistance_X(){
     auto echoDuration = std::chrono::duration_cast<std::chrono::microseconds>(echoEnd - echoStart).count();
      {
             // std::lock_guard<std::mutex> lock(distanceMutex);
-            float dis=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
+            float dis=10*(echoDuration * 0.0343) / 2.0;
+            echoDuration=0; // Speed of sound is 343 m/s
             return dis;
         }
 
-        usleep(10000);
+    lock.unlock();
+
+        // usleep(10000);
 }
 float MeasureDistance_Y(){
     
@@ -482,7 +493,8 @@ float MeasureDistance_Y(){
         auto elapsed = std::chrono::steady_clock::now() - start;
         if (std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count() > 50000) {
             // Timeout after 50ms
-            cout<<"Timeout at y"<<endl;
+            // cout<<"Timeout at y"<<endl;
+            return -1;
             break;
         }
     }
@@ -496,7 +508,8 @@ float MeasureDistance_Y(){
     auto echoDuration = std::chrono::duration_cast<std::chrono::microseconds>(echoEnd - echoStart).count();
      {
             // std::lock_guard<std::mutex> lock(distanceMutex);
-            float dis=10*(echoDuration * 0.0343) / 2.0; // Speed of sound is 343 m/s
+            float dis=10*(echoDuration * 0.0343) / 2.0;
+            echoDuration=0; // Speed of sound is 343 m/s
             return dis;
         }
 
@@ -505,42 +518,63 @@ float MeasureDistance_Y(){
     
 
 void calculate_x_distance(Distances& dis){
-    int value_range=50;
-    float measured_dis[4][value_range];
+    int value_range=20;
+    int set_value=4;
+    float measured_dis[set_value][value_range];
     float avg_measured_dis[value_range];
     float distance;
     int count=0;
     float sum=0;
     float actual_sum=0;
+    bool timeout=false;
     while (1)
     {
         MeasureDistance_X();
         count++;
 
         if(count>=40){
-            for(int i=0;i<4;i++){
+         
+            for(int i=0;i<set_value;i++){
                 for (int j=0;j<value_range;j++){
                     measured_dis[i][j]=MeasureDistance_X();
+                    if(measured_dis[i][j]==-1){
+                        timeout=true;
+                        // break;
+                    }
                 }
+                // break;
             }
-
-            for(int j=0;j<value_range;j++){
-                for(int i=0;i<4;i++){
-                    sum=sum+measured_dis[i][j];
+            // if(timeout==false){
+                for(int j=0;j<value_range;j++){
+                    for(int i=0;i<set_value;i++){
+                        sum=sum+measured_dis[i][j];
+                    }
+                    avg_measured_dis[j]=sum/4;
+                    sum=0;
+                    
                 }
-                avg_measured_dis[j]=sum/4;
-                sum=0;
-            }
 
-            for(int i=0;i<value_range;i++){
-                actual_sum=actual_sum+avg_measured_dis[i];
-            }
+                for(int i=0;i<value_range;i++){
+                    actual_sum=actual_sum+avg_measured_dis[i];
+                }
+                
+                     unique_lock<mutex> lock(distanceMutex,defer_lock);
+            lock.lock();
+                    dis.x_distance=actual_sum/value_range;
+                    // lock.unlock();
+                    
+            // }
+            lock.unlock();
+            // usleep(10);
             
             // cout<<"Actual Distance = "<<actual_sum/value_range<<endl;
-            dis.x_distance=actual_sum/value_range;
+            timeout=false;
             actual_sum=0;
+            // usleep(1000);
+            
 
         }
+
         
         
     }
@@ -555,56 +589,83 @@ void calculate_y_distance(Distances& dis){
     int count=0;
     float sum=0;
     float actual_sum=0;
-    while (1)
+    bool timeout=false;
+    bool reached=false;
+    while (!reached)
     {
         MeasureDistance_Y();
         count++;
 
         if(count>=40){
+            
             for(int i=0;i<4;i++){
                 for (int j=0;j<value_range;j++){
                     measured_dis[i][j]=MeasureDistance_Y();
+                    if(measured_dis[i][j]==-1){
+                        timeout=true;
+                        // count=0;
+                        break;
+                    }
+                    else{
+                        timeout=false;
+                    }
                 }
+                // break;
             }
 
-            for(int j=0;j<value_range;j++){
-                for(int i=0;i<4;i++){
-                    sum=sum+measured_dis[i][j];
-                }
-                avg_measured_dis[j]=sum/4;
-                sum=0;
-            }
+            // if(timeout==false){
 
-            for(int i=0;i<value_range;i++){
-                actual_sum=actual_sum+avg_measured_dis[i];
-            }
+                for(int j=0;j<value_range;j++){
+                    for(int i=0;i<4;i++){
+                        sum=sum+measured_dis[i][j];
+                    }
+                    avg_measured_dis[j]=sum/4;
+                    sum=0;
+                    
+                }
+
+                for(int i=0;i<value_range;i++){
+                    actual_sum=actual_sum+avg_measured_dis[i];
+                }
+                    
+                unique_lock<mutex> lock(y_distance,defer_lock);
+                lock.lock();
+                 dis.y_distance=actual_sum/value_range;
+                lock.unlock();
+                actual_sum=0;
             
-            // cout<<"Actual Distance = "<<actual_sum/value_range<<endl;
-            dis.y_distance=actual_sum/value_range;
-            actual_sum=0;
-
+            usleep(10);
+            
+        
+        
         }
-        
-        
+
+
+            // usleep(1000);
+
+            
+            
+
     }
-    
+        
+        
 }
 
 void calculate_xy(position& cam_val,rPosition& bot_val,mMovement& move){
-    int dis_x=init_x-cam_val.camera_x;
+    int dis_x=ref_x-cam_val.camera_x;
      if(dis_x<0){
           dis_x=dis_x*(-1);
      }
 
-     move.x_distance=dis_x+zero_x+error_x+new_error_x;
+     move.x_distance=full_sensor_x-( dis_x+zero_x+error_x+new_error_x+zero_y);
 
-    move.y_distance=init_y+error_y-cam_val.camera_y+new_error_y;
+    move.y_distance=ref_y+error_y-cam_val.camera_y+new_error_y;
     
     if(move.x_distance>bot_val.robot_x){
-            move.Dirx=x_back;
+            move.Dirx=x_front;
     }
     else{
-            move.Dirx=x_front;
+            move.Dirx=x_back;
     }
 
         if(move.y_distance>bot_val.robot_y){
@@ -620,48 +681,180 @@ void calculate_xy(position& cam_val,rPosition& bot_val,mMovement& move){
 
 
 void move_x_sonar(mMovement& val,Distances& dis){
-    x_dir.digitalWrite(val.Dirx);
+    cout<<"X SONAR CALLED"<<endl;
+    int limit;
+    if(dis.x_distance>val.x_distance){
+        x_dir.digitalWrite(x_front);
+    }
+    else{
+        x_dir.digitalWrite(x_back);
+    }
+    
     int minmumDistance=val.x_distance-reach_threshold;
     int maximumDistane=val.x_distance+reach_threshold;
     
     
     bool reached=false;
+    cout<<"X distance outside loop= "<< dis.x_distance << "  "<<minmumDistance<<"  "<<maximumDistane<<endl;
     while(!reached){
+
+        
+        // cout<<"X distance= "<< dis.x_distance <<endl;
+        
+         if(x_limit_back_switch.digitalRead()==0 || x_limit_front_switch.digitalRead()==0){
+                x_pulse.digitalWrite(1);
+                usleep(delay_x);
+                x_pulse.digitalWrite(0);
+                usleep(delay_x);
+            }
+        usleep(100);
+           
+        // lock.unlock();
+        unique_lock<mutex> lock(distanceMutex,defer_lock);
+        lock.lock();
         if(minmumDistance<=dis.x_distance && maximumDistane >=dis.x_distance){
+            cout<<"X distance inside-----= "<< dis.x_distance <<endl;
             reached=true;
             break;
         }
-        else{
-            x_pulse.digitalWrite(1);
-            usleep(delay_x);
-            x_pulse.digitalWrite(0);
-            usleep(delay_x);
-        }
+        lock.unlock();
+        
+
+
+        
+        
+        
+           
+            
+            // usleep(100000);
+        
+        
     }
+    // lock.unlock();
 
 }
 
 
 void move_y_sonar(mMovement& val,Distances& dis){
-    y_dir.digitalWrite(val.Diry);
+     if(dis.y_distance>val.y_distance){
+        y_dir.digitalWrite(y_left);
+    }
+    else{
+        y_dir.digitalWrite(y_right);
+    }
     int minmumDistance=val.y_distance-reach_threshold;
     int maximumDistane=val.y_distance+reach_threshold;
     
     
     bool reached=false;
+     cout<<"  Y Distance outside loop= "<<dis.y_distance<< "  "<<minmumDistance<<"  "<<maximumDistane<<endl;
     while(!reached){
-        if(minmumDistance<=dis.y_distance && maximumDistane >=dis.y_distance){
-            reached=true;
-            break;
-        }
-        else{
+        
+       
+        cout<<"  Y Distance = "<<dis.y_distance<<endl;
+       
+            if(y_limit_left_switch.digitalRead()==0&&y_limit_right_switch.digitalRead()==0){
             y_pulse.digitalWrite(1);
             usleep(delay_y);
             y_pulse.digitalWrite(0);
             usleep(delay_y);
+            }
+            unique_lock<mutex> lock(y_distance,defer_lock);
+            lock.lock();
+            if(minmumDistance<=dis.y_distance && maximumDistane >=dis.y_distance){
+             cout<<"  Y Distance Inside ------ = "<<dis.y_distance<<endl;
+            reached=true;
+            break;
+            
+             }
+            lock.unlock();
+           
         }
-    }
+        
+    
 
+}
+
+void calculate_distances(Distances& dis){
+    int value_range=50;
+    float measured_dis[4][value_range];
+    float avg_measured_dis[value_range];
+    float distance;
+    int count=0;
+    float sum=0;
+    float actual_sum=0;
+    bool timeout=false;
+    while (1)
+    {
+        MeasureDistance_Y();
+        MeasureDistance_X();
+        count++;
+
+        if(count>=40){
+            for(int i=0;i<4;i++){
+                for (int j=0;j<value_range;j++){
+                    measured_dis[i][j]=MeasureDistance_Y();
+                    if(measured_dis[i][j]==-1){
+                        timeout=true;
+                        // break;
+                    }
+                }
+            }
+
+            // if(timeout==false){
+
+                for(int j=0;j<value_range;j++){
+                    for(int i=0;i<4;i++){
+                        sum=sum+measured_dis[i][j];
+                    }
+                    avg_measured_dis[j]=sum/4;
+                    sum=0;
+                    
+                }
+
+                for(int i=0;i<value_range;i++){
+                    actual_sum=actual_sum+avg_measured_dis[i];
+                }
+                
+                    dis.y_distance=actual_sum/value_range;
+            // }
+            // cout<<"Actual Distance = "<<actual_sum/value_range<<endl;
+            // timeout=false;
+            actual_sum=0;
+
+            for(int i=0;i<4;i++){
+                for (int j=0;j<value_range;j++){
+                    measured_dis[i][j]=MeasureDistance_X();
+                    if(measured_dis[i][j]==-1){
+                        timeout=true;
+                        // break;
+                    }
+                }
+                // break;
+            }
+            // if(timeout==false){
+                for(int j=0;j<value_range;j++){
+                    for(int i=0;i<4;i++){
+                        sum=sum+measured_dis[i][j];
+                    }
+                    avg_measured_dis[j]=sum/4;
+                    sum=0;
+                    
+                }
+
+                for(int i=0;i<value_range;i++){
+                    actual_sum=actual_sum+avg_measured_dis[i];
+                }
+                
+                
+                    dis.x_distance=actual_sum/value_range;
+                actual_sum=0;
+
+        }
+        
+        
+    }
+    
 }
 
 

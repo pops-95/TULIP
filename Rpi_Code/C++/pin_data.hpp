@@ -23,9 +23,9 @@
 #define y_echo_pin 13
 #define y_trigger_pin 19
 
-#define delay_y 50//50
+#define delay_y 200//50
 #define delay_y_initial  100
-#define  delay_x  100 //100
+#define  delay_x  1 //100
 #define delay_z 300
 #define delay_c 500
 
@@ -58,9 +58,12 @@
 
 #define reach_threshold 5
 
-int init_y=461;
-int init_x=-263;
-int zero_x=212;
+int ref_y=483;
+int ref_x=61;
+int zero_x=170;
+int zero_y=205;
+int diff_dis=320;
+int full_sensor_x=678;
 
 int error_x_posve=0;
 int error_x_negve=0;
@@ -68,6 +71,6 @@ int error_y_posve=0;
 int error_y_negve=0;
 int error_y=0;//10;
 int error_x=-20;//-38;
-int new_error_x=-20;
-int new_error_y=-20;
+int new_error_x=0;//-20;
+int new_error_y=0;//-20;
 int initial_error=0;//-38;
