@@ -55,6 +55,11 @@ typedef struct Distances{
     float y_distance;
 };
 
+typedef struct Errordata{
+    float accu_x;
+    float accu_y;
+};
+
 typedef struct Initial_Measeures{
     int y_pulse_right;
     int y_pulse_left;
