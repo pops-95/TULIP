@@ -30,6 +30,7 @@
 #include "core/VL53L1X_calibration.h"
 #include "vl53l1_platform.h"
 #include "vl53l1_linux_platform.c"
+#include "../Rpi_Code/C++/move.cpp"
 /* Defines ------------------------------------------------------------------*/
 
 
@@ -50,11 +51,7 @@
 char cmd[1024];
 int user_cmd_set;
 int SensorStateBool;
-
-typedef struct Distances{
-    float x_distance;
-    float y_distance;
-};
+mutex mu;
 
 
 uint16_t Dev;
@@ -101,12 +98,14 @@ void measurement(Distances& dis){
 	status = VL53L1X_SensorInit(Dev);
 	/* status += VL53L1X_SetInterruptPolarity(Dev, 0); */
 	status += VL53L1X_SetDistanceMode(Dev, 1); /* 1=short, 2=long */
-	status += VL53L1X_SetTimingBudgetInMs(Dev, 50);
-	status += VL53L1X_SetInterMeasurementInMs(Dev, 60);
+	status += VL53L1X_SetTimingBudgetInMs(Dev, 15);
+	status += VL53L1X_SetInterMeasurementInMs(Dev, 20);
 	status += VL53L1X_StartRanging(Dev);
 
     /* read and display data loop */
 	while (1) {
+		unique_lock<mutex> lock(mu,defer_lock);
+    	lock.lock();
         #if defined(POLLING)
                 uint8_t dataReady = 0;
 
@@ -121,10 +120,13 @@ void measurement(Distances& dis){
                     return -1;
                 }
         #endif
+
+		
 		/* Get the data the new way */
 		status += VL53L1X_GetResult(Dev, &Results);
 
         dis.x_distance=Results.Distance;
+		lock.unlock();
 
 		// printf(" dist = %5d\n",Results.Distance);
 

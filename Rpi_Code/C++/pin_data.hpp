@@ -1,12 +1,12 @@
 
-#define pulse_y 2
-#define dir_y   3
+#define pulse_y 12
+#define dir_y   16
 
 #define pulse_x 18
 #define dir_x   15
 
-#define pulse_z 17
-#define dir_z   27
+#define pulse_z 20
+#define dir_z   21
 
 #define pulse_c 23
 #define dir_c   24
@@ -14,14 +14,14 @@
 #define x_limit 22
 #define y_limit 9
 #define z_limit 11
-#define x_limit_extra 25
-#define y_limit_extra 16
+#define x_limit_extra 5
+#define y_limit_extra 6
 
 
-#define x_echo_pin 5
-#define x_trigger_pin 6
-#define y_echo_pin 13
-#define y_trigger_pin 19
+// #define x_echo_pin 5
+// #define x_trigger_pin 6
+// #define y_echo_pin 13
+// #define y_trigger_pin 19
 
 #define delay_y 200//50
 #define delay_y_initial  100

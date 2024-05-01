@@ -1,27 +1,44 @@
 #include "ultrasonic.cpp"
 #include <iostream>
 #include <thread>
+// #include "../Rpi_Code/C++/move.cpp"
 #include <chrono>
 
 
 using namespace std;
 
-mutex mu;
+
 Distances dis;
-int desired_dis=350;
+int desired_dis=420;
 int reach_thresh=1;
 
 void show_distance(Distances& dis){
+    this_thread::sleep_for(std::chrono::milliseconds(1000));
+    x_dir.digitalWrite(x_front);
+    int min_dis=desired_dis-2;
     while(1){
-        if((desired_dis-reach_thresh)<=dis.x_distance&&dis.x_distance<=(desired_dis+reach_thresh)){
-            cout<<"Reached Distance is ="<<dis.x_distance<<endl;
-            break;
-        }
-        else{
-            cout<<"Distance = "<<dis.x_distance<<endl;
-        }
+
+            unique_lock<mutex> lock(mu,defer_lock);
+            lock.lock();
+
+            if(dis.x_distance>=min_dis){
+                cout<<"Reached Distance is ="<<dis.x_distance<<endl;
+                break;
+            }
+            else{
+                x_pulse.digitalWrite(1);
+                usleep(delay_x);
+                x_pulse.digitalWrite(0);
+                usleep(delay_x);
+                cout<<"Reached Distance is ="<<dis.x_distance<<endl;
+
+            }
+
+            lock.unlock();
+            
         
-        this_thread::sleep_for(std::chrono::milliseconds(60));
+        
+        // this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     
 }
