@@ -56,7 +56,7 @@
 #define ERRO_WRITING 3
 #define ERROR_READING 4
 
-#define reach_threshold 5
+#define reach_threshold 2
 
 int ref_y=483;
 int ref_x=61;

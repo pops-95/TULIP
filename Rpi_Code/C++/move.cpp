@@ -4,18 +4,25 @@
 #include <thread>
 #include <mutex>
 #include<atomic>
+#include <condition_variable>
 
 // Mutex for synchronization
 std::mutex distanceMutex;
 std:: mutex y_distance;
 
 float pulse_per_dis_x=800/60;
-
+bool first_time_x=true;
 
 int full_x=863;
 
 
 using namespace std;
+
+mutex x_move;
+mutex y_move;
+
+conditional_variable x_move_cond;
+conditional_variable y_move_cond;
 
 typedef struct cSteps{
     float x_steps;
@@ -106,11 +113,11 @@ gpio z_limit_switch(z_limit,input);
 
 void origin(){
     x_dir.digitalWrite(x_back);
-    y_dir.digitalWrite(y_left);
+    y_dir.digitalWrite(y_right);
     z_dir.digitalWrite(z_up);
 
     for (int j=0;j<10*number_of_pulse_xy;j++){
-        if(y_limit_left_switch.digitalRead()==0){
+        if(y_limit_right_switch.digitalRead()==0){
             y_pulse.digitalWrite(1);
             usleep(delay_y);
             y_pulse.digitalWrite(0);
@@ -131,7 +138,7 @@ void origin(){
             usleep(delay_z);
         }
 
-        if(y_limit_left_switch.digitalRead()==1 && x_limit_back_switch.digitalRead()==1 &&z_limit_switch.digitalRead()==1){
+        if(y_limit_right_switch.digitalRead()==1 && x_limit_back_switch.digitalRead()==1 &&z_limit_switch.digitalRead()==1){
             break;
         }
     }
@@ -247,6 +254,7 @@ void move_z(int dir,float dis){
     }
 }
 
+/*
 void move_x(mMovement *movement){
      x_dir.digitalWrite(movement->Dirx);
      int limit_value;
@@ -310,6 +318,8 @@ void movexy(mMovement *movement){
     move_y(movement);
 
 }
+*/
+
 
 void move_y_left(){
      
@@ -436,9 +446,6 @@ void store_leaves_belt(int current_pos){
 
 
 
-
-
-
 void calculate_xy(position& cam_val,rPosition& bot_val,mMovement& move){
     int dis_x=ref_x-cam_val.camera_x;
      if(dis_x<0){
@@ -465,102 +472,6 @@ void calculate_xy(position& cam_val,rPosition& bot_val,mMovement& move){
 
     move.z_steps=cam_val.camera_z-1060;
     
-}
-
-
-void move_x_sonar(mMovement& val,Distances& dis){
-    cout<<"X SONAR CALLED"<<endl;
-    int limit;
-    if(dis.x_distance>val.x_distance){
-        x_dir.digitalWrite(x_front);
-    }
-    else{
-        x_dir.digitalWrite(x_back);
-    }
-    
-    int minmumDistance=val.x_distance-reach_threshold;
-    int maximumDistane=val.x_distance+reach_threshold;
-    
-    
-    bool reached=false;
-    cout<<"X distance outside loop= "<< dis.x_distance << "  "<<minmumDistance<<"  "<<maximumDistane<<endl;
-    while(!reached){
-
-        
-        // cout<<"X distance= "<< dis.x_distance <<endl;
-        
-         if(x_limit_back_switch.digitalRead()==0 || x_limit_front_switch.digitalRead()==0){
-                x_pulse.digitalWrite(1);
-                usleep(delay_x);
-                x_pulse.digitalWrite(0);
-                usleep(delay_x);
-            }
-        usleep(100);
-           
-        // lock.unlock();
-        unique_lock<mutex> lock(distanceMutex,defer_lock);
-        lock.lock();
-        if(minmumDistance<=dis.x_distance && maximumDistane >=dis.x_distance){
-            cout<<"X distance inside-----= "<< dis.x_distance <<endl;
-            reached=true;
-            break;
-        }
-        lock.unlock();
-        
-
-
-        
-        
-        
-           
-            
-            // usleep(100000);
-        
-        
-    }
-    // lock.unlock();
-
-}
-
-
-void move_y_sonar(mMovement& val,Distances& dis){
-     if(dis.y_distance>val.y_distance){
-        y_dir.digitalWrite(y_left);
-    }
-    else{
-        y_dir.digitalWrite(y_right);
-    }
-    int minmumDistance=val.y_distance-reach_threshold;
-    int maximumDistane=val.y_distance+reach_threshold;
-    
-    
-    bool reached=false;
-     cout<<"  Y Distance outside loop= "<<dis.y_distance<< "  "<<minmumDistance<<"  "<<maximumDistane<<endl;
-    while(!reached){
-        
-       
-        cout<<"  Y Distance = "<<dis.y_distance<<endl;
-       
-            if(y_limit_left_switch.digitalRead()==0&&y_limit_right_switch.digitalRead()==0){
-            y_pulse.digitalWrite(1);
-            usleep(delay_y);
-            y_pulse.digitalWrite(0);
-            usleep(delay_y);
-            }
-            unique_lock<mutex> lock(y_distance,defer_lock);
-            lock.lock();
-            if(minmumDistance<=dis.y_distance && maximumDistane >=dis.y_distance){
-             cout<<"  Y Distance Inside ------ = "<<dis.y_distance<<endl;
-            reached=true;
-            break;
-            
-             }
-            lock.unlock();
-           
-        }
-        
-    
-
 }
 
 
@@ -605,6 +516,35 @@ void fine_tuning_xy(Errordata& data,mMovement& move_val){
 
 
 
+void move_x(mMovement& move_val){
+    // x_dir.digitalWrite(move_val.Dirx);
+    if(dis.x_distance>move_val.x_distance){
+        x_dir.digitalWrite(x_back);
+    }
+    else{
+        x_dir.digitalWrite(x_front);
+    }
+    while(1){
+
+        unique_lock<mutex> locker(x_move,defer_lock);
+        x_move_cond.wait(locker);
+        if((move_val.x_distance-reach_thresh)<=dis.x_distance&&dis.x_distance<=(move_val.x_distance+reach_thresh)){
+            cout<<"Reached Distance =" <<dis.x_distance<<endl;
+        }
+
+        else{
+            x_pulse.digitalWrite(1);
+            delay(delay_x);
+            x_pulse.digitalWrite(0);
+            delay(delay_x);        
+        }
+        first_time_x=false;
+        locker.unlock();
+        x_move_cond.notify_one();
+
+    }
+
+}
 
 
 

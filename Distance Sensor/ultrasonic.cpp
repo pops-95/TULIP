@@ -51,27 +51,27 @@
 char cmd[1024];
 int user_cmd_set;
 int SensorStateBool;
-mutex mu;
+
+
 
 
 uint16_t Dev;
+int adapter_nr = 0;
+int file = 0;
+int status;
+uint8_t byteData, sensorState = 0;
+uint16_t wordData;
+VL53L1X_Result_t Results;
+uint8_t first_range = 1;
+uint8_t I2cDevAddr = 0x29;
+uint16_t ROI_X;
+uint16_t ROI_Y;
+int16_t  offset;
+adapter_nr = 1;
 
 
-void measurement(Distances& dis){
-    int adapter_nr = 0;
-	int file = 0;
-	int status;
-	uint8_t byteData, sensorState = 0;
-	uint16_t wordData;
-	VL53L1X_Result_t Results;
-	uint8_t first_range = 1;
-	uint8_t I2cDevAddr = 0x29;
-	uint16_t ROI_X;
-	uint16_t ROI_Y;
-	int16_t  offset;
-
-    adapter_nr = 1;
-
+void sensor_start(uint16_t& Dev){
+	
     file = VL53L1X_UltraLite_Linux_I2C_Init(Dev, adapter_nr, I2cDevAddr);
 	if (file == -1)
 		exit(1);
@@ -99,13 +99,25 @@ void measurement(Distances& dis){
 	/* status += VL53L1X_SetInterruptPolarity(Dev, 0); */
 	status += VL53L1X_SetDistanceMode(Dev, 1); /* 1=short, 2=long */
 	status += VL53L1X_SetTimingBudgetInMs(Dev, 15);
-	status += VL53L1X_SetInterMeasurementInMs(Dev, 20);
+	status += VL53L1X_SetInterMeasurementInMs(Dev, 15);
+}
+
+
+
+void measurement(Distances& dis,uint16_t& Dev){
+   
 	status += VL53L1X_StartRanging(Dev);
 
     /* read and display data loop */
 	while (1) {
-		unique_lock<mutex> lock(mu,defer_lock);
-    	lock.lock();
+		unique_lock<mutex> locker(x_move,defer_lock);
+		if(!first_time_x){
+			x_move_cond.wait(locker);
+		}
+		else{
+			locker.lock();
+		}
+    	
         #if defined(POLLING)
                 uint8_t dataReady = 0;
 
@@ -126,8 +138,8 @@ void measurement(Distances& dis){
 		status += VL53L1X_GetResult(Dev, &Results);
 
         dis.x_distance=Results.Distance;
-		lock.unlock();
-
+		locker.unlock();
+		x_move_cond.notify_one();
 		// printf(" dist = %5d\n",Results.Distance);
 
 		/* trigger next ranging */
@@ -139,6 +151,10 @@ void measurement(Distances& dis){
 			status += VL53L1X_ClearInterrupt(Dev);
 			first_range = 0;
 		}
+
+
+
+
 	}
 
 }
