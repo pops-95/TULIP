@@ -516,8 +516,9 @@ void fine_tuning_xy(Errordata& data,mMovement& move_val){
 
 
 
-void move_x(mMovement& move_val){
+void move_x(mMovement& move_val,Distances& dis){
     // x_dir.digitalWrite(move_val.Dirx);
+    cout<<"Currently at position = "<<dis.x_distance<<endl;
     if(dis.x_distance>move_val.x_distance){
         x_dir.digitalWrite(x_back);
     }

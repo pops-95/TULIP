@@ -17,17 +17,18 @@ mMovement move_val;
 int desired_dis=420;
 int reach_thresh=1;
 
-
+uint16_t Dev;
 
 
 
 int main(int argc, char const *argv[])
 {
-    thread x_distance(measurement,ref(dis));
+    sensor_start(Dev);
+    thread x_distance(measurement,ref(dis),ref(Dev));
 
     this_thread::sleep_for(std::chrono::milliseconds(1000));
     move_val.x_distance=380;
-    move_x(move_val);
+    move_x(move_val,dis);
     // x_dir.digitalWrite(x_front);
     // int min_dis=desired_dis-2;
     // while(1){

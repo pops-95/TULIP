@@ -55,7 +55,7 @@ int SensorStateBool;
 
 
 
-uint16_t Dev;
+
 int adapter_nr = 0;
 int file = 0;
 int status;
