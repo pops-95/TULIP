@@ -61,18 +61,38 @@ int file = 0;
 int status;
 uint8_t byteData, sensorState = 0;
 uint16_t wordData;
-VL53L1X_Result_t Results;
+
 uint8_t first_range = 1;
 uint8_t I2cDevAddr = 0x29;
 uint16_t ROI_X;
 uint16_t ROI_Y;
 int16_t  offset;
 
+void change_sensor_add(uint16_t& Dev,uint8_t& add){
+	//shut all sensor
+	x_shut.digitalWrite(0);
+	y_shut.digitalWrite(0);
+
+	this_thread::sleep_for(std::chrono::microseconds(50));
+
+	// awake only y sensor;
+	y_shut.digitalWrite(1);
+	this_thread::sleep_for(std::chrono::microseconds(50));
+
+	file = VL53L1X_UltraLite_Linux_I2C_Init(Dev, adapter_nr, I2cDevAddr);
+	if (file == -1)
+		exit(1);
+
+	status= VL53L1X_SetI2CAddress(Dev,add);
+	this_thread::sleep_for(std::chrono::microseconds(50));
+
+	x_shut.digitalWrite(1);
+}
 
 
-void sensor_start(uint16_t& Dev){
+void sensor_start(uint16_t& Dev,uint8_t& address){
 	
-    file = VL53L1X_UltraLite_Linux_I2C_Init(Dev, adapter_nr, I2cDevAddr);
+    file = VL53L1X_UltraLite_Linux_I2C_Init(Dev, adapter_nr, address);
 	if (file == -1)
 		exit(1);
     
@@ -104,17 +124,35 @@ void sensor_start(uint16_t& Dev){
 
 
 
-void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
-   
+void measurement(Distances& dis,uint16_t& Dev,bool& flag,uint8_t& add){
+	sensor_start(Dev,add);
+	string filename;
+	VL53L1X_Result_t Results;
 	status += VL53L1X_StartRanging(Dev);
+	if(flag){
+		filename="output_x.txt";
+	}
+
+	else{
+		filename="output_y.txt";
+	}
+
 
     /* read and display data loop */
 	while (1) {
 		unique_lock<mutex> locker(x_move,defer_lock);
 		// locker.lock();
-		cout<<"lock aquired from sensor"<<endl;
+		
+		
 		
     	
+		locker.lock();
+		if(flag){
+				cout<<"lock aquired from sensor x"<<endl;
+		}
+		else{
+			cout<<"lock aquired from sensor y"<<endl;
+		}
         #if defined(POLLING)
                 uint8_t dataReady = 0;
 
@@ -131,11 +169,13 @@ void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
         #endif
 
 		
+		
+
 		/* Get the data the new way */
 		status += VL53L1X_GetResult(Dev, &Results);
-
-		locker.lock();
-		std::ofstream outfile("output.txt");
+		
+		std::ofstream outfile(filename);
+		
 		
 		if (outfile.is_open()) {
 			int value_to_write = Results.Distance;
@@ -146,9 +186,16 @@ void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
 			// Close the file
 			outfile.close();
 
-        std::cout << "Integer value has been written to the file." << std::endl;
+        std::cout << "Integer value has been written to the file."<<value_to_write << std::endl;
    		}
+		if(flag){
+				cout<<"lock released from sensor x"<<endl;
+		}
+		else{
+			cout<<"lock released from sensor y"<<endl;
+		}
 		locker.unlock();
+		
         dis.x_distance=Results.Distance;
 		
 		// printf(" dist = %5d\n",Results.Distance);
@@ -170,7 +217,7 @@ void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
 		// 	cout<<"lock aquired after wait"<<endl;
 		// }
 		
-		cout<<"lock released from sensor"<<endl;
+		// cout<<"lock from sensor"<<endl;
 		
 
 

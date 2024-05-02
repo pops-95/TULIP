@@ -39,7 +39,9 @@
 #define x_back 1
 #define x_front 0
 
-#define x_sensor_shut   27
+#define x_sensor_shut   17
+
+#define y_sensor_shut   27
 
 
 #define z_up  1

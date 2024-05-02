@@ -102,6 +102,8 @@ gpio z_dir(dir_z,output);
 gpio cutter_dir(dir_c,output);
 
 gpio x_shut(x_sensor_shut,output);
+gpio y_shut(y_sensor_shut,output);
+
 
 gpio x_limit_front_switch(x_limit,input);
 gpio x_limit_back_switch(x_limit_extra,input);
@@ -529,7 +531,7 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
     // value_read=dis.x_distance;
     locker.lock();
 
-        std::ifstream infile("../Distance Sensor/output.txt");
+        std::ifstream infile("../Distance Sensor/output_x.txt");
 
         if (infile.is_open()) {
             
@@ -560,7 +562,7 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
         // x_move_cond.wait(locker);
         locker.lock();
 
-        std::ifstream infile("../Distance Sensor/output.txt");
+        std::ifstream infile("../Distance Sensor/output_x.txt");
 
         if (infile.is_open()) {
             
@@ -632,7 +634,7 @@ void move_y(mMovement& move_val,Distances& dis,bool& first_time_x){
     // value_read=dis.x_distance;
     locker.lock();
 
-        std::ifstream infile("../Distance Sensor/output.txt");
+        std::ifstream infile("../Distance Sensor/output_y.txt");
 
         if (infile.is_open()) {
             
@@ -663,7 +665,7 @@ void move_y(mMovement& move_val,Distances& dis,bool& first_time_x){
         // x_move_cond.wait(locker);
         locker.lock();
 
-        std::ifstream infile("../Distance Sensor/output.txt");
+        std::ifstream infile("../Distance Sensor/output_y.txt");
 
         if (infile.is_open()) {
             
