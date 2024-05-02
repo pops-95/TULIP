@@ -125,7 +125,10 @@ void sensor_start(uint16_t& Dev,uint8_t& address){
 
 
 void measurement(Distances& dis,uint16_t& Dev,bool& flag,uint8_t& add){
+	unique_lock<mutex> locker(x_move,defer_lock);
+	locker.lock();
 	sensor_start(Dev,add);
+	locker.unlock();
 	string filename;
 	VL53L1X_Result_t Results;
 	status += VL53L1X_StartRanging(Dev);
@@ -140,13 +143,13 @@ void measurement(Distances& dis,uint16_t& Dev,bool& flag,uint8_t& add){
 
     /* read and display data loop */
 	while (1) {
-		unique_lock<mutex> locker(x_move,defer_lock);
+		
 		// locker.lock();
 		
 		
 		
     	
-		locker.lock();
+		
 		if(flag){
 				cout<<"lock aquired from sensor x"<<endl;
 		}
@@ -170,7 +173,7 @@ void measurement(Distances& dis,uint16_t& Dev,bool& flag,uint8_t& add){
 
 		
 		
-
+		locker.lock();
 		/* Get the data the new way */
 		status += VL53L1X_GetResult(Dev, &Results);
 		
@@ -196,7 +199,7 @@ void measurement(Distances& dis,uint16_t& Dev,bool& flag,uint8_t& add){
 		}
 		locker.unlock();
 		
-        dis.x_distance=Results.Distance;
+        // dis.x_distance=Results.Distance;
 		
 		// printf(" dist = %5d\n",Results.Distance);
 

@@ -36,6 +36,7 @@ int main(int argc, char const *argv[])
     // sensor_start(Dev_x,I2cDevAddr);
     // sensor_start(Dev_x);
     thread x_distance(measurement,ref(dis),ref(Dev_x),ref(flag_x),ref(I2cDevAddr));
+    this_thread::sleep_for(std::chrono::seconds(1));
     thread y_distance(measurement,ref(dis),ref(Dev_y),ref(flag_y),ref(change_add));
     // // while (1)
     // {
