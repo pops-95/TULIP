@@ -32,8 +32,9 @@ int main(int argc, char const *argv[])
     // }
     
 
+        
+    move_val.x_distance=atoi(argv[1]);
     
-    move_val.x_distance=278;
     move_x(move_val,dis,first_time_x);
     // x_dir.digitalWrite(x_front);
     // int min_dis=desired_dis-2;

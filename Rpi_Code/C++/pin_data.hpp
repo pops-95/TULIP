@@ -25,7 +25,7 @@
 
 #define delay_y 200//50
 #define delay_y_initial  100
-#define  delay_x  10 //100
+#define  delay_x  1 //100
 #define delay_z 300
 #define delay_c 500
 

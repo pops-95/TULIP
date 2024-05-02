@@ -524,6 +524,7 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
     this_thread::sleep_for(std::chrono::milliseconds(1000));
     unique_lock<mutex> locker(x_move,defer_lock);
 
+    // value_read=dis.x_distance;
     locker.lock();
 
         std::ifstream infile("../Distance Sensor/output.txt");
@@ -543,7 +544,7 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
             infile.close();
     }
         locker.unlock();
-
+        
     cout<<"Currently at position = "<<value_read<<endl;
     if(value_read>move_val.x_distance){
         x_dir.digitalWrite(x_back);
@@ -552,11 +553,10 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
         x_dir.digitalWrite(x_front);
     }
     while(1){
-
         
-        
+               
         // x_move_cond.wait(locker);
-         locker.lock();
+        locker.lock();
 
         std::ifstream infile("../Distance Sensor/output.txt");
 
@@ -575,8 +575,9 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
             infile.close();
     }
         locker.unlock();
-
+        
         cout<<"lock aquired from x"<<endl;
+        // value_read=dis.x_distance;
          cout<<"Position Now = " <<value_read<<endl;
          
         if((move_val.x_distance-reach_thresh)<=value_read&&value_read<=(move_val.x_distance+reach_thresh)){
@@ -585,6 +586,7 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
             cout<<"flag = "<<first_time_x<<endl;
             // locker.unlock();
             // x_move_cond.notify_one();
+            cout<<"lock released from x"<<endl;
             break;
         }
 
@@ -604,6 +606,7 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
        
                     
         }
+        this_thread::sleep_for(std::chrono::microseconds(1));
         // locker.unlock();
 
         

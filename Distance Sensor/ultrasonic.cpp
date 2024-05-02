@@ -98,7 +98,7 @@ void sensor_start(uint16_t& Dev){
 	status = VL53L1X_SensorInit(Dev);
 	/* status += VL53L1X_SetInterruptPolarity(Dev, 0); */
 	status += VL53L1X_SetDistanceMode(Dev, 1); /* 1=short, 2=long */
-	status += VL53L1X_SetTimingBudgetInMs(Dev, 15);
+	status += VL53L1X_SetTimingBudgetInMs(Dev, 20);
 	status += VL53L1X_SetInterMeasurementInMs(Dev, 20);
 }
 
@@ -111,29 +111,24 @@ void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
     /* read and display data loop */
 	while (1) {
 		unique_lock<mutex> locker(x_move,defer_lock);
-		// if(!first_time_x){
-		// 	x_move_cond.wait(locker);
-		// 	cout<<"lock aquired after wait"<<endl;
-		// }
-		// else{
-			
-			cout<<"lock aquired  from sensor"<<endl;
-		// }
+		// locker.lock();
+		cout<<"lock aquired from sensor"<<endl;
+		
     	
-        // #if defined(POLLING)
-        //         uint8_t dataReady = 0;
+        #if defined(POLLING)
+                uint8_t dataReady = 0;
 
-        //         while (dataReady == 0) {
-        //             status = VL53L1X_CheckForDataReady(Dev, &dataReady);
-        //             usleep(1);
-        //         }
-        // #else
-        //         status = VL53L1X_UltraLite_WaitForInterrupt(ST_TOF_IOCTL_WFI);
-        //         if (status) {
-        //             printf("ST_TOF_IOCTL_WFI failed, err = %d\n", status);
-        //             return -1;
-        //         }
-        // #endif
+                while (dataReady == 0) {
+                    status = VL53L1X_CheckForDataReady(Dev, &dataReady);
+                    usleep(1);
+                }
+        #else
+                status = VL53L1X_UltraLite_WaitForInterrupt(ST_TOF_IOCTL_WFI);
+                if (status) {
+                    printf("ST_TOF_IOCTL_WFI failed, err = %d\n", status);
+                    return -1;
+                }
+        #endif
 
 		
 		/* Get the data the new way */
@@ -154,7 +149,7 @@ void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
         std::cout << "Integer value has been written to the file." << std::endl;
    		}
 		locker.unlock();
-        // dis.x_distance=Results.Distance;
+        dis.x_distance=Results.Distance;
 		
 		// printf(" dist = %5d\n",Results.Distance);
 
@@ -170,6 +165,11 @@ void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
 
 		// locker.unlock();
 		// x_move_cond.notify_one();
+		// if(!first_time_x){
+		// 	x_move_cond.wait(locker);
+		// 	cout<<"lock aquired after wait"<<endl;
+		// }
+		
 		cout<<"lock released from sensor"<<endl;
 		
 
