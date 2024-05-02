@@ -23,7 +23,7 @@
 // #define y_echo_pin 13
 // #define y_trigger_pin 19
 
-#define delay_y 200//50
+#define delay_y 100//50
 #define delay_y_initial  100
 #define  delay_x  1 //100
 #define delay_z 300
@@ -38,6 +38,8 @@
 
 #define x_back 1
 #define x_front 0
+
+#define x_sensor_shut   27
 
 
 #define z_up  1

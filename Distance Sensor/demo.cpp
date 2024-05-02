@@ -30,12 +30,12 @@ int main(int argc, char const *argv[])
     //     /* code */
     //     cout<<dis.x_distance<<endl;
     // }
-    
+    x_shut.digitalWrite(1);
 
         
-    move_val.x_distance=atoi(argv[1]);
-    
-    move_x(move_val,dis,first_time_x);
+    move_val.y_distance=atoi(argv[1]);
+
+    move_y(move_val,dis,first_time_x);
     // x_dir.digitalWrite(x_front);
     // int min_dis=desired_dis-2;
     // while(1){

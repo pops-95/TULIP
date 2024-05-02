@@ -101,6 +101,8 @@ gpio y_dir(dir_y,output);
 gpio z_dir(dir_z,output);
 gpio cutter_dir(dir_c,output);
 
+gpio x_shut(x_sensor_shut,output);
+
 gpio x_limit_front_switch(x_limit,input);
 gpio x_limit_back_switch(x_limit_extra,input);
 gpio y_limit_left_switch(y_limit,input);
@@ -607,6 +609,109 @@ void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
                     
         }
         this_thread::sleep_for(std::chrono::microseconds(1));
+        // locker.unlock();
+
+        
+        
+
+        
+        
+    }
+
+}
+
+
+
+
+void move_y(mMovement& move_val,Distances& dis,bool& first_time_x){
+    // x_dir.digitalWrite(move_val.Dirx);
+    int value_read;
+    this_thread::sleep_for(std::chrono::milliseconds(1000));
+    unique_lock<mutex> locker(x_move,defer_lock);
+
+    // value_read=dis.x_distance;
+    locker.lock();
+
+        std::ifstream infile("../Distance Sensor/output.txt");
+
+        if (infile.is_open()) {
+            
+
+            // Read the integer value from the file
+            if (infile >> value_read) {
+                // Output the value read from the file
+                std::cout << "Integer value read from the file: " << value_read << std::endl;
+            } else {
+                std::cerr << "Error reading integer value from the file." << std::endl;
+            }
+
+            // Close the file
+            infile.close();
+    }
+        locker.unlock();
+        
+    cout<<"Currently at position = "<<value_read<<endl;
+    if(value_read>move_val.y_distance){
+        y_dir.digitalWrite(y_right);
+    }
+    else{
+        y_dir.digitalWrite(y_left);
+    }
+    while(1){
+        
+               
+        // x_move_cond.wait(locker);
+        locker.lock();
+
+        std::ifstream infile("../Distance Sensor/output.txt");
+
+        if (infile.is_open()) {
+            
+
+            // Read the integer value from the file
+            if (infile >> value_read) {
+                // Output the value read from the file
+                std::cout << "Integer value read from the file: " << value_read << std::endl;
+            } else {
+                std::cerr << "Error reading integer value from the file." << std::endl;
+            }
+
+            // Close the file
+            infile.close();
+    }
+        locker.unlock();
+        
+        cout<<"lock aquired from x"<<endl;
+        // value_read=dis.x_distance;
+         cout<<"Position Now = " <<value_read<<endl;
+         
+        if((move_val.y_distance-reach_thresh)<=value_read&&value_read<=(move_val.y_distance+reach_thresh)){
+            cout<<"Reached Distance =" <<value_read<<endl;
+            first_time_x=true;
+            cout<<"flag = "<<first_time_x<<endl;
+            // locker.unlock();
+            // x_move_cond.notify_one();
+            cout<<"lock released from x"<<endl;
+            break;
+        }
+
+        else{
+            // for(int i=0; i<20 ;i++){
+            y_pulse.digitalWrite(1);
+            usleep(delay_y);
+            y_pulse.digitalWrite(0);
+            usleep(delay_y);
+            // }
+
+            first_time_x=false;
+        
+        // x_move_cond.notify_one();
+        cout<<"lock released from x"<<endl;
+        cout<<"flag = "<<first_time_x<<endl;
+       
+                    
+        }
+        this_thread::sleep_for(std::chrono::microseconds(5));
         // locker.unlock();
 
         
