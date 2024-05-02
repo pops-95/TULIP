@@ -11,14 +11,14 @@ using namespace std;
 bool flag_x=true;
 bool flag_y=false;
 
-
+uint8_t I2cDevAddr = 0x29;
 Distances dis;
 mMovement move_val;
 int desired_dis=330;
 
 
 uint16_t Dev_x;
-uint16_t Dev_y;
+
 
 uint8_t add=0x44;
 uint8_t change_add=add>>1;
@@ -28,16 +28,18 @@ int main(int argc, char const *argv[])
 {   
     y_shut.digitalWrite(1);
     x_shut.digitalWrite(1);
-    change_sensor_add(Dev_y,add);
+    change_sensor_add(add);
     // y_shut.digitalWrite(1);
 
     // sensor_start(Dev_y,change_add);
 
     // sensor_start(Dev_x,I2cDevAddr);
     // sensor_start(Dev_x);
-    thread x_distance(measurement,ref(dis),ref(Dev_x),ref(flag_x),ref(I2cDevAddr));
+    thread y_distance(measurement_y,ref(dis),ref(flag_y),ref(change_add));
     this_thread::sleep_for(std::chrono::seconds(1));
-    thread y_distance(measurement,ref(dis),ref(Dev_y),ref(flag_y),ref(change_add));
+    thread x_distance(measurement_x,ref(dis),ref(flag_x),ref(I2cDevAddr));
+    
+    
     // // while (1)
     // {
     //     /* code */
