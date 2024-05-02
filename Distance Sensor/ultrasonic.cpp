@@ -56,7 +56,7 @@ int SensorStateBool;
 
 
 
-int adapter_nr = 0;
+int adapter_nr = 1;
 int file = 0;
 int status;
 uint8_t byteData, sensorState = 0;
@@ -67,7 +67,7 @@ uint8_t I2cDevAddr = 0x29;
 uint16_t ROI_X;
 uint16_t ROI_Y;
 int16_t  offset;
-adapter_nr = 1;
+
 
 
 void sensor_start(uint16_t& Dev){
@@ -99,47 +99,63 @@ void sensor_start(uint16_t& Dev){
 	/* status += VL53L1X_SetInterruptPolarity(Dev, 0); */
 	status += VL53L1X_SetDistanceMode(Dev, 1); /* 1=short, 2=long */
 	status += VL53L1X_SetTimingBudgetInMs(Dev, 15);
-	status += VL53L1X_SetInterMeasurementInMs(Dev, 15);
+	status += VL53L1X_SetInterMeasurementInMs(Dev, 20);
 }
 
 
 
-void measurement(Distances& dis,uint16_t& Dev){
+void measurement(Distances& dis,uint16_t& Dev,bool& first_time_x){
    
 	status += VL53L1X_StartRanging(Dev);
 
     /* read and display data loop */
 	while (1) {
 		unique_lock<mutex> locker(x_move,defer_lock);
-		if(!first_time_x){
-			x_move_cond.wait(locker);
-		}
-		else{
-			locker.lock();
-		}
+		// if(!first_time_x){
+		// 	x_move_cond.wait(locker);
+		// 	cout<<"lock aquired after wait"<<endl;
+		// }
+		// else{
+			
+			cout<<"lock aquired  from sensor"<<endl;
+		// }
     	
-        #if defined(POLLING)
-                uint8_t dataReady = 0;
+        // #if defined(POLLING)
+        //         uint8_t dataReady = 0;
 
-                while (dataReady == 0) {
-                    status = VL53L1X_CheckForDataReady(Dev, &dataReady);
-                    usleep(1);
-                }
-        #else
-                status = VL53L1X_UltraLite_WaitForInterrupt(ST_TOF_IOCTL_WFI);
-                if (status) {
-                    printf("ST_TOF_IOCTL_WFI failed, err = %d\n", status);
-                    return -1;
-                }
-        #endif
+        //         while (dataReady == 0) {
+        //             status = VL53L1X_CheckForDataReady(Dev, &dataReady);
+        //             usleep(1);
+        //         }
+        // #else
+        //         status = VL53L1X_UltraLite_WaitForInterrupt(ST_TOF_IOCTL_WFI);
+        //         if (status) {
+        //             printf("ST_TOF_IOCTL_WFI failed, err = %d\n", status);
+        //             return -1;
+        //         }
+        // #endif
 
 		
 		/* Get the data the new way */
 		status += VL53L1X_GetResult(Dev, &Results);
 
-        dis.x_distance=Results.Distance;
+		locker.lock();
+		std::ofstream outfile("output.txt");
+		
+		if (outfile.is_open()) {
+			int value_to_write = Results.Distance;
+
+			// Write the integer value to the file
+			outfile << value_to_write << std::endl;
+
+			// Close the file
+			outfile.close();
+
+        std::cout << "Integer value has been written to the file." << std::endl;
+   		}
 		locker.unlock();
-		x_move_cond.notify_one();
+        // dis.x_distance=Results.Distance;
+		
 		// printf(" dist = %5d\n",Results.Distance);
 
 		/* trigger next ranging */
@@ -151,6 +167,11 @@ void measurement(Distances& dis,uint16_t& Dev){
 			status += VL53L1X_ClearInterrupt(Dev);
 			first_range = 0;
 		}
+
+		// locker.unlock();
+		// x_move_cond.notify_one();
+		cout<<"lock released from sensor"<<endl;
+		
 
 
 

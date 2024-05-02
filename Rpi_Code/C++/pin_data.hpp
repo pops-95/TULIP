@@ -25,7 +25,7 @@
 
 #define delay_y 200//50
 #define delay_y_initial  100
-#define  delay_x  1 //100
+#define  delay_x  10 //100
 #define delay_z 300
 #define delay_c 500
 
@@ -56,7 +56,7 @@
 #define ERRO_WRITING 3
 #define ERROR_READING 4
 
-#define reach_threshold 2
+#define reach_thresh 5
 
 int ref_y=483;
 int ref_x=61;

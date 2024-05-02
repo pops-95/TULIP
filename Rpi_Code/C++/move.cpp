@@ -5,6 +5,8 @@
 #include <mutex>
 #include<atomic>
 #include <condition_variable>
+#include <fstream>
+
 
 // Mutex for synchronization
 std::mutex distanceMutex;
@@ -21,8 +23,8 @@ using namespace std;
 mutex x_move;
 mutex y_move;
 
-conditional_variable x_move_cond;
-conditional_variable y_move_cond;
+condition_variable x_move_cond;
+condition_variable y_move_cond;
 
 typedef struct cSteps{
     float x_steps;
@@ -516,10 +518,34 @@ void fine_tuning_xy(Errordata& data,mMovement& move_val){
 
 
 
-void move_x(mMovement& move_val,Distances& dis){
+void move_x(mMovement& move_val,Distances& dis,bool& first_time_x){
     // x_dir.digitalWrite(move_val.Dirx);
-    cout<<"Currently at position = "<<dis.x_distance<<endl;
-    if(dis.x_distance>move_val.x_distance){
+    int value_read;
+    this_thread::sleep_for(std::chrono::milliseconds(1000));
+    unique_lock<mutex> locker(x_move,defer_lock);
+
+    locker.lock();
+
+        std::ifstream infile("../Distance Sensor/output.txt");
+
+        if (infile.is_open()) {
+            
+
+            // Read the integer value from the file
+            if (infile >> value_read) {
+                // Output the value read from the file
+                std::cout << "Integer value read from the file: " << value_read << std::endl;
+            } else {
+                std::cerr << "Error reading integer value from the file." << std::endl;
+            }
+
+            // Close the file
+            infile.close();
+    }
+        locker.unlock();
+
+    cout<<"Currently at position = "<<value_read<<endl;
+    if(value_read>move_val.x_distance){
         x_dir.digitalWrite(x_back);
     }
     else{
@@ -527,22 +553,64 @@ void move_x(mMovement& move_val,Distances& dis){
     }
     while(1){
 
-        unique_lock<mutex> locker(x_move,defer_lock);
-        x_move_cond.wait(locker);
-        if((move_val.x_distance-reach_thresh)<=dis.x_distance&&dis.x_distance<=(move_val.x_distance+reach_thresh)){
-            cout<<"Reached Distance =" <<dis.x_distance<<endl;
+        
+        
+        // x_move_cond.wait(locker);
+         locker.lock();
+
+        std::ifstream infile("../Distance Sensor/output.txt");
+
+        if (infile.is_open()) {
+            
+
+            // Read the integer value from the file
+            if (infile >> value_read) {
+                // Output the value read from the file
+                std::cout << "Integer value read from the file: " << value_read << std::endl;
+            } else {
+                std::cerr << "Error reading integer value from the file." << std::endl;
+            }
+
+            // Close the file
+            infile.close();
+    }
+        locker.unlock();
+
+        cout<<"lock aquired from x"<<endl;
+         cout<<"Position Now = " <<value_read<<endl;
+         
+        if((move_val.x_distance-reach_thresh)<=value_read&&value_read<=(move_val.x_distance+reach_thresh)){
+            cout<<"Reached Distance =" <<value_read<<endl;
+            first_time_x=true;
+            cout<<"flag = "<<first_time_x<<endl;
+            // locker.unlock();
+            // x_move_cond.notify_one();
+            break;
         }
 
         else{
-            x_pulse.digitalWrite(1);
-            delay(delay_x);
+            // for(int i=0; i<20 ;i++){
+                x_pulse.digitalWrite(1);
+            usleep(delay_x);
             x_pulse.digitalWrite(0);
-            delay(delay_x);        
-        }
-        first_time_x=false;
-        locker.unlock();
-        x_move_cond.notify_one();
+            usleep(delay_x);
+            // }
 
+            first_time_x=false;
+        
+        // x_move_cond.notify_one();
+        cout<<"lock released from x"<<endl;
+        cout<<"flag = "<<first_time_x<<endl;
+       
+                    
+        }
+        // locker.unlock();
+
+        
+        
+
+        
+        
     }
 
 }

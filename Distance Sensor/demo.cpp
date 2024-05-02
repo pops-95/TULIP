@@ -14,8 +14,8 @@ using namespace std;
 
 Distances dis;
 mMovement move_val;
-int desired_dis=420;
-int reach_thresh=1;
+int desired_dis=330;
+
 
 uint16_t Dev;
 
@@ -24,11 +24,17 @@ uint16_t Dev;
 int main(int argc, char const *argv[])
 {
     sensor_start(Dev);
-    thread x_distance(measurement,ref(dis),ref(Dev));
+    thread x_distance(measurement,ref(dis),ref(Dev),ref(first_time_x));
+    // while (1)
+    // {
+    //     /* code */
+    //     cout<<dis.x_distance<<endl;
+    // }
+    
 
-    this_thread::sleep_for(std::chrono::milliseconds(1000));
-    move_val.x_distance=380;
-    move_x(move_val,dis);
+    
+    move_val.x_distance=278;
+    move_x(move_val,dis,first_time_x);
     // x_dir.digitalWrite(x_front);
     // int min_dis=desired_dis-2;
     // while(1){
@@ -59,6 +65,6 @@ int main(int argc, char const *argv[])
     //     // this_thread::sleep_for(std::chrono::milliseconds(20));
     // }
     
-
+    x_distance.join();
     return 0;
 }
