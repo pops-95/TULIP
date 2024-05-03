@@ -39,5 +39,5 @@ clamp_close=1
 addr_current=0x29
 addr_desired=0x44
 
-reach_thresh=5
-reach_thresh_y=5
+reach_thresh=2
+reach_thresh_y=2
