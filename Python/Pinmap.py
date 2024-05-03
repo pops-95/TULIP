@@ -17,7 +17,7 @@ x_limit_extra=5
 y_limit_extra=6
 
 delay_y=100
-delay_x=1
+delay_x=50
 delay_z=300
 delay_c=500
 
@@ -40,3 +40,4 @@ addr_current=0x29
 addr_desired=0x44
 
 reach_thresh=5
+reach_thresh_y=5
