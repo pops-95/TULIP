@@ -41,3 +41,8 @@ addr_desired=0x44
 
 reach_thresh=2
 reach_thresh_y=2
+
+number_pulse_zc=800
+
+reach_top=200
+cut_reach=100
