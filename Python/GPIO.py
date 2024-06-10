@@ -272,3 +272,33 @@ class RPI_controller():
         while running:
             result[1] = tof_y.get_distance()        
     
+    def demo_cut(self,z_dis,delay_time=0.5):
+        self.move_z_up()
+        self.openclamp()
+        time.sleep(delay_time)
+        self.move_z_down(z_dis)
+        time.sleep(delay_time)
+        self.move_z_up()
+        time.sleep(delay_time)
+        self.closeclamp()
+        # closeclamp()
+        time.sleep(delay_time)
+        self.store_leaf()
+        # GPIO.cleanup()
+        time.sleep(delay_time)
+    
+    def cut_operation(self,z_dis,delay_time=0.5):
+        self.move_z_up()
+        self.openclamp()
+        time.sleep(delay_time)
+        self.move_z_down(z_dis)
+        time.sleep(delay_time)
+        self.closeclamp()
+        time.sleep(delay_time)
+        self.move_z_up()
+        time.sleep(delay_time)       
+        self.store_leaf()
+        # GPIO.cleanup()
+        time.sleep(delay_time)
+        
+    
