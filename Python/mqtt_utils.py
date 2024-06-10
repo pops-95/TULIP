@@ -10,7 +10,11 @@ class Mqtt_Node():
         self.client_id=f'publish-{random.randint(0, 1000)}'
         self.coordinate_topic="tulip/coordinate"
         self.error_topic="tulip/error"
+        self.ack_topic="tulip/ack"
+        self.running_topic="tulip/running"
         self.data=[]
+        self.ack_flag=False
+        self.data_received_flag=False
 
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc,properties):
@@ -24,12 +28,15 @@ class Mqtt_Node():
         self.client.connect(self.broker, self.port)
         
     def publish(self,value,topic):
-        if(topic=="coordinate"):
+        if(topic==self.coordinate_topic):
             msg=f"coordinates:{value[0]},{value[1]},{value[2]}"
-            topic=self.coordinate_topic
-        if(topic=="error"):
+            
+        if(topic==self.error_topic):
             msg=f"Error: {value}"
-            topic=self.error_topic
+        
+        if(topic==self.ack_topic):
+            msg=f"Ack:{value}"
+           
 
         result = self.client.publish(topic, msg)
         # result: [0, 1]
@@ -50,21 +57,40 @@ class Mqtt_Node():
     def subscribe(self,topic):
         
         def on_message(client, userdata, msg):
-            # print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-            # self.data.clear()
-            self.data.append(msg.payload.decode())
+            # if(len(self.data)>0):
+            #     self.data.clear()
+            self.check_value(msg.payload.decode())
+            # self.data.append(msg.payload.decode())
             # data.append(msg.payload.decode())
 
         self.client.subscribe(topic)
         self.client.on_message = on_message
 
-    def get_values(self):
+    def get_values(self,cor_values):
         print(self.data)
-        split_string=self.data[0].split(':')
-        lis=split_string[1]
         # print(split_string[1])
-        number_list = json.loads(split_string[1])
+        number_list = json.loads(cor_values)
         # Print the list
         # print(number_list)
-        self.data.clear()
         return number_list
+    
+    def check_value(self,msg):
+        split_string=msg.split(':')
+        if(split_string[0]=="coordinates"):
+            print("ok")
+            if(len(self.data)>0):
+                self.data.clear()
+            self.data.append(split_string[1])
+            #do something
+        if(split_string[0]=="Ack"):
+            # print("Ack")
+            if(split_string[1]=="yes"):
+                self.ack_flag=True
+            else:
+                self.ack_flag=False
+                #do something
+        if(split_string[0]=="Running"):
+            if(split_string[1]=="stop"):
+                raise Exception("Stop Signalled")
+        
+        
