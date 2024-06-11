@@ -54,7 +54,7 @@ if __name__=="__main__":
                             controller.demo_cut(values[2])
                         else:
                             controller.cut_operation(values[2])
-                            
+                    client.publish("Operation Done. Going to origin",client.ack_topic)      
                     controller.origin()
   
             except Exception as e:

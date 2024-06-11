@@ -311,7 +311,4 @@ class RPI_controller():
         print("RPI Controller object desctructed")
         GPIO.cleanup()
         
-        
-    
-        
     

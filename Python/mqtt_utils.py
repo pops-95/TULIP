@@ -100,6 +100,4 @@ class Mqtt_Node():
                 #do something
         if(split_string[0]=="Running"):
             if(split_string[1]=="stop"):
-                raise Exception("Stop")
-        
-        
+                raise Exception("Stop")  
