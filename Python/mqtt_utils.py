@@ -14,6 +14,7 @@ class Mqtt_Node():
         self.running_topic="tulip/running"
         self.data=[]
         self.ack_flag=False
+        self.demo_run_flag=False
         self.data_received_flag=False
 
     def connect_mqtt(self):
@@ -88,9 +89,17 @@ class Mqtt_Node():
                 self.ack_flag=True
             else:
                 self.ack_flag=False
+        
+        if(split_string[0]=="Run"):
+            # print("Ack")
+            if(split_string[1]=="yes"):
+                self.demo_run_flag=True
+            else:
+                self.demo_run_flag=False
+        
                 #do something
         if(split_string[0]=="Running"):
             if(split_string[1]=="stop"):
-                raise Exception("Stop Signalled")
+                raise Exception("Stop")
         
         

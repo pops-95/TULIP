@@ -99,7 +99,7 @@ class RPI_controller():
                 break
     
     def origin(self):
-    # move_z_up()
+        self.move_z_up()
         self.move_x_back()
         self.move_y_right() 
     
@@ -300,5 +300,18 @@ class RPI_controller():
         self.store_leaf()
         # GPIO.cleanup()
         time.sleep(delay_time)
+        
+    def move_to_position(self,values,result):
+        self.move_x(values[0],result)
+        self.check_accuracy_x(values[0],result)
+        self.move_y(values[1],result)
+        self.check_accuracy_y(values[1],result)
+        
+    def __del__(self):
+        print("RPI Controller object desctructed")
+        GPIO.cleanup()
+        
+        
+    
         
     
