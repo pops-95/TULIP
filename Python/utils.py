@@ -29,11 +29,11 @@ GPIO.setup(Pinmap.dir_y,GPIO.OUT)
 GPIO.setup(Pinmap.dir_z,GPIO.OUT)
 GPIO.setup(Pinmap.dir_c,GPIO.OUT)
 
-GPIO.setup(Pinmap.x_limit,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(Pinmap.y_limit,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(Pinmap.x_limit,GPIO.IN)
+GPIO.setup(Pinmap.y_limit,GPIO.IN)
 GPIO.setup(Pinmap.z_limit,GPIO.IN)
-GPIO.setup(Pinmap.x_limit_extra,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(Pinmap.y_limit_extra,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(Pinmap.x_limit_extra,GPIO.IN)
+GPIO.setup(Pinmap.y_limit_extra,GPIO.IN)
 
 GPIO.setup(Pinmap.x_sensor_shut,GPIO.OUT)
 GPIO.setup(Pinmap.y_sensor_shut,GPIO.OUT)
@@ -93,7 +93,7 @@ def move_z_up():
     while(1):
         # print("value limiz z = {}".format(GPIO.input(Pinmap.z_limit)))
         if(GPIO.input(Pinmap.z_limit)==1):
-            pulse(Pinmap.pulse_z,Pinmap.delay_z)
+            pulse(Pinmap.pulse_z,200)
             i=i+1
             
         else:
@@ -108,14 +108,14 @@ def origin():
     
 
 def openclamp():
-    GPIO.output(Pinmap.dir_c,GPIO.LOW)
-    total_pulse=(int)((.3)*Pinmap.number_pulse_zc)
+    GPIO.output(Pinmap.dir_c,GPIO.HIGH)
+    total_pulse=(int)((.4)*Pinmap.number_pulse_zc)
     for i in range(total_pulse):
         pulse(Pinmap.pulse_c,_durationsleep=Pinmap.delay_c)
     
 def closeclamp():
-    GPIO.output(Pinmap.dir_c,GPIO.HIGH)
-    total_pulse=(int)((.8)*Pinmap.number_pulse_zc)
+    GPIO.output(Pinmap.dir_c,GPIO.LOW)
+    total_pulse=(int)((.5)*Pinmap.number_pulse_zc)
     for i in range(total_pulse):
         pulse(Pinmap.pulse_c,_durationsleep=Pinmap.delay_z)
         
@@ -173,14 +173,62 @@ def move_x(distance,result):
             # print("current position x = {} mm ".format(result[0]))
             
         if(diff>60):
-            pulse(Pinmap.pulse_x,10)
+            pulse(Pinmap.pulse_x,75)
             # print("current position x = {} mm ".format(result[0]))
         if(diff<0):
             print("Exceeded position x = {} mm".format(result[0]))
             break
         # time.sleep(.0001)
 
-
+def trapezoidal_x(distance,result):
+    pulse_width=200
+    distance=distance-8
+    print("current position x = {} mm ".format(result[0]))
+    if(result[0]>distance):
+        flag=True
+        max_dis=distance-Pinmap.reach_thresh
+        min_dis=distance+Pinmap.reach_thresh
+        GPIO.setup(Pinmap.dir_x,GPIO.OUT)
+        time.sleep(0.001)
+        GPIO.output(Pinmap.dir_x,GPIO.HIGH)
+    else:
+        flag=False
+        max_dis=distance+Pinmap.reach_thresh
+        min_dis=distance-Pinmap.reach_thresh
+        GPIO.setup(Pinmap.dir_x,GPIO.OUT)
+        time.sleep(0.001)
+        GPIO.output(Pinmap.dir_x,GPIO.LOW)
+        
+    while 1:
+        if(flag):
+            diff=result[0]-distance
+            if(max_dis<=result[0]and result[0]<=min_dis):
+                print("reached position x = {} mm".format(result[0]))
+                break
+        
+        else:
+            diff=distance-result[0]
+            if(min_dis<=result[0]and result[0]<=max_dis):
+                print("reached position x = {} mm".format(result[0]))
+                break
+            
+        if(diff<=60):
+            # if(result[0]>max_dis):
+            #     break
+            pulse(Pinmap.pulse_x,500)
+            # print("current position x = {} mm ".format(result[0]))
+        if(diff>60):
+            
+            pulse(Pinmap.pulse_x,pulse_width)
+            pulse_width=pulse_width-10
+            if(pulse_width<=10):
+                pulse_width=10    
+        
+        if(diff<0):
+            print("Exceeded position x = {} mm".format(result[0]))
+            break
+        
+    
 def move_y(distance,result):
     
     print("current position y = {} mm ".format(result[1]))
@@ -225,7 +273,7 @@ def move_y(distance,result):
             
 
 def check_accuracy_x(distance,result):
-    move_x(distance,result)            
+    trapezoidal_x(distance,result)            
 def check_accuracy_y(distance,result):
     move_y(distance,result)
     
@@ -235,7 +283,7 @@ def move_z_down(distance):
     step=(distance-880)/(125*2)
     pulse_number=(int)(step*Pinmap.number_pulse_zc)
     for i in range(pulse_number):
-        pulse(Pinmap.pulse_z,Pinmap.delay_z)
+        pulse(Pinmap.pulse_z,300)
     
 def change_add_sensor():
     
@@ -276,7 +324,7 @@ def measure_x(result):
 def measure_y(result):
     
     global running
-    tof_y = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_desired)
+    tof_y = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_current)
     tof_y.open()
     tof_y.set_user_roi(roi)
     tof_y.set_timing(timing_budget,inter_measurement_time)
@@ -319,6 +367,9 @@ def check_distance(result):
         print("x = {} mm and y = {} mm".format(result[0],result[1]))
         time.sleep(.5)
         
+        
+
+            
 def exit_handler(signal, frame):
     global running
     running = False
@@ -331,7 +382,8 @@ signal.signal(signal.SIGINT, exit_handler)
 
 
 
-
+# GPIO.output(Pinmap.x_sensor_shut,GPIO.HIGH)
+# GPIO.output(Pinmap.y_sensor_shut,GPIO.HIGH)
 
 if __name__=="__main__":
     # GPIO.cleanup()
@@ -341,62 +393,77 @@ if __name__=="__main__":
     # openclamp()
     # time.sleep(2)
     # closeclamp()
-    change_add_sensor()
+    # change_add_sensor()
+    # GPIO.cleanup()
     result=multiprocessing.Array('i',[0]*2)
     
     x1=multiprocessing.Process(target=measure_x,args=(result,))
     x1.start()
-    y1=multiprocessing.Process(target=measure_y,args=(result,))
+    # y1=multiprocessing.Process(target=measure_y,args=(result,))
     
-    y1.start()
-    time.sleep(3)
+    # y1.start()
+    # time.sleep(3)
     # move_z_up()
     # origin()
-    time.sleep(1)
-    part_values=[0,0,0]
-    # camera_values=[188,-16,1348,14,-104,1348,-122,-141,1348,50,-292,1348]
-    camera_values=[421,426,1170]
-    # camera_values=[490,422,1230]
-    print(len(camera_values)/3)
-    for i in range(int(len(camera_values)/3)):
+    # while (1):
+    #     print(GPIO.input(Pinmap.y_limit))
+    #     time.sleep(0.5)
+    # check_distance()
+    # part_values=[0,0,0]
+    # # closeclamp()
+    # # time.sleep(2)
+    # openclamp()
+    # time.sleep(2)
+    # closeclamp()
+    # # move_z_down(1230)
+    # # time.sleep(2)
+    # # move_z_up()
+    # # camera_values=[188,-16,1348,14,-104,1348,-122,-141,1348,50,-292,1348]
+    # camera_values=[507,261,1168,272,334,1226,341,209,1244,228,396,1200]
+    # # camera_values=[490,422,1230]
+    # print(len(camera_values)/3)
+    # for i in range(int(len(camera_values)/3)):
         
-        # time.sleep(1)
+    #     # time.sleep(1)
         
-        x_dis=camera_values[i*3]
-        y_dis=camera_values[(i*3)+1]
-        z_dis=camera_values[(i*3)+2]
+    #     x_dis=camera_values[i*3]
+    #     y_dis=camera_values[(i*3)+1]
+    #     z_dis=camera_values[(i*3)+2]
         
-        # x_dis,y_dis,z_dis=calculate_xy(part_values)
+    #     # x_dis,y_dis,z_dis=calculate_xy(part_values)
         
-        # print("calculated x = {} mm , y= {} mm".format(x_dis,y_dis))
-        # check_distance(result)
+    #     # print("calculated x = {} mm , y= {} mm".format(x_dis,y_dis))
+    #     # check_distance(result)
         
         
-        move_x(x_dis,result)
-        time.sleep(0.5)
-        check_accuracy_x(x_dis,result)
-        time.sleep(0.5)
-        move_y(y_dis,result)
-        time.sleep(0.5)
-        check_accuracy_y(y_dis,result)
-        time.sleep(0.5)
+    #     trapezoidal_x(x_dis,result)
+    #     time.sleep(0.5)
+    #     check_accuracy_x(x_dis,result)
+    #     time.sleep(0.5)
+    #     move_y(y_dis,result)
+    #     time.sleep(0.5)
+    #     check_accuracy_y(y_dis,result)
+    #     time.sleep(0.5)
         
-        # move_z_up()
-        # openclamp()
-        # time.sleep(0.5)
-        # move_z_down(z_dis)
-        # time.sleep(0.5)
-        # closeclamp()
-        # time.sleep(0.5)
-        # move_z_up()
-        # time.sleep(0.5)
-        # # closeclamp()
-        # # time.sleep(1)
-        # store_leaf()
-        # # GPIO.cleanup()
-        # time.sleep(.5)
+    #     # move_z_up()
+    #     openclamp()
+    #     time.sleep(1)
+    #     move_z_down(z_dis)
+    #     time.sleep(0.5)
+    #     closeclamp()
+    #     time.sleep(0.5)
+    #     move_z_up()
+    #     time.sleep(0.5)
+    #     openclamp()
+    #     time.sleep(1)
+    #     closeclamp()
+    #     # closeclamp()
+    #     # time.sleep(1)
+    #     # store_leaf()
+    #     # GPIO.cleanup()
+    #     time.sleep(.5)
         
-    running=False
+    # running=False
        
         
     

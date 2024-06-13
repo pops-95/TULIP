@@ -10,16 +10,16 @@ dir_z=21
 pulse_c=23
 dir_c=24
 
-x_limit=22
-y_limit=9
+x_limit=22 # front
+y_limit=10
 z_limit=11
-x_limit_extra=5
-y_limit_extra=6
+x_limit_extra=9 #back
+y_limit_extra=11 #right
 
 delay_y=100
 delay_x=50
-delay_z=300
-delay_c=500
+delay_z=50
+delay_c=200
 
 y_right=0
 y_left=1
@@ -31,7 +31,7 @@ z_up=1
 z_down=0
 
 x_sensor_shut=17
-y_sensor_shut=27
+y_sensor_shut=4
 
 clamp_open=0
 clamp_close=1
