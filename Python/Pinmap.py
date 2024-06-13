@@ -7,8 +7,8 @@ dir_x=15
 pulse_z=20
 dir_z=21
 
-pulse_c=23
-dir_c=24
+pulse_c=25
+dir_c=8
 
 x_limit=22 # front
 y_limit=10
