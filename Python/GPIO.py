@@ -210,7 +210,7 @@ class RPI_controller():
                 # print("current position y = {} mm ".format(result[1]))
                 
             if(diff>60):
-                pulse(Pinmap.pulse_y,50)
+                self.pulse(Pinmap.pulse_y,50)
                 # print("current position  y = {} mm ".format(result[1]))
             if(diff<0):
                 self.print("Exceeded position y = {} mm".format(result[1]))
@@ -248,8 +248,8 @@ class RPI_controller():
         GPIO.output(Pinmap.x_sensor_shut,GPIO.HIGH)      
     
         
-    def measure_x(self,result):
-        global running
+    def measure_x(self,result,show_flag=False):
+        running=True
         tof_x = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_current)
         tof_x.open()
         tof_x.set_user_roi(self.roi_x)
@@ -258,11 +258,13 @@ class RPI_controller():
         
         while running:
             result[0] = tof_x.get_distance()
+            if(show_flag):
+                print(f"Distance X = {result[0]}")
             
             
-    def measure_y(self,result):
+    def measure_y(self,result,show_flag=False):
         
-        global running
+        running=True
         tof_y = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_desired)
         tof_y.open()
         tof_y.set_user_roi(self.roi)
@@ -270,7 +272,9 @@ class RPI_controller():
         tof_y.start_ranging(1)
         
         while running:
-            result[1] = tof_y.get_distance()        
+            result[1] = tof_y.get_distance()
+            if(show_flag):
+                print(f"Distance Y = {result[1]}")        
     
     def demo_cut(self,z_dis,delay_time=0.5):
         self.move_z_up()
@@ -310,5 +314,16 @@ class RPI_controller():
     def __del__(self):
         print("RPI Controller object desctructed")
         GPIO.cleanup()
+        
+    def limit_switch_check():
+        while(1):
+            print("Front limit switch value = " + GPIO.input(Pinmap.x_limit))
+            print("Rear limit switch value = " + GPIO.input(Pinmap.x_limit_extra))
+            print("Left limit switch value = " + GPIO.input(Pinmap.y_limit))
+            print("Right limit switch value = " + GPIO.input(Pinmap.y_limit_extra))
+            print("-------------------")
+            time.sleep(.5)
+            
+     
         
     

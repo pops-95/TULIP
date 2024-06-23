@@ -11,7 +11,7 @@ pulse_c=25
 dir_c=8
 
 x_limit=22 # front
-y_limit=10
+y_limit=10 #left
 z_limit=11
 x_limit_extra=9 #back
 y_limit_extra=11 #right
