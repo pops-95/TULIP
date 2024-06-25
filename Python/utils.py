@@ -31,7 +31,7 @@ GPIO.setup(Pinmap.dir_c,GPIO.OUT)
 
 GPIO.setup(Pinmap.x_limit,GPIO.IN)
 GPIO.setup(Pinmap.y_limit,GPIO.IN)
-GPIO.setup(Pinmap.z_limit,GPIO.IN)
+GPIO.setup(Pinmap.z_limit,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(Pinmap.x_limit_extra,GPIO.IN)
 GPIO.setup(Pinmap.y_limit_extra,GPIO.IN)
 
@@ -303,6 +303,7 @@ def change_add_sensor():
     
     
 def measure_x(result):
+    # GPIO.output(Pinmap.y_sensor_shut,GPIO.LOW)b
     global running
     tof_x = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_current)
     tof_x.open()
@@ -311,7 +312,8 @@ def measure_x(result):
     tof_x.start_ranging(1)
     
     while running:
-        result[0] = tof_x.get_distance() 
+        result[0] = tof_x.get_distance()
+        # print("X distance = {} ".format(result[0])) 
         # sum=0
         # for i in range(10):
         #     val=tof_x.get_distance() 
@@ -324,14 +326,15 @@ def measure_x(result):
 def measure_y(result):
     
     global running
-    tof_y = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_current)
+    tof_y = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=Pinmap.addr_desired)
     tof_y.open()
     tof_y.set_user_roi(roi)
     tof_y.set_timing(timing_budget,inter_measurement_time)
     tof_y.start_ranging(1)
     
     while running:
-        result[1] = tof_y.get_distance() 
+        result[1] = tof_y.get_distance()
+        print("Y distance = {} ".format(result[1])) 
         # sum=0
         # for i in range(10):
         #     val=tof_y.get_distance() 
@@ -395,20 +398,23 @@ if __name__=="__main__":
     # closeclamp()
     # change_add_sensor()
     # GPIO.cleanup()
+    # while 1:
+    #      print("Z limit switch value = " + str(GPIO.input(Pinmap.z_limit)))
+    #      time.sleep(0.5)
     result=multiprocessing.Array('i',[0]*2)
-    
-    x1=multiprocessing.Process(target=measure_x,args=(result,))
-    x1.start()
+    measure_y(result)
+    # x1=multiprocessing.Process(target=measure_x,args=(result,))
+    # x1.start()
     # y1=multiprocessing.Process(target=measure_y,args=(result,))
     
     # y1.start()
     # time.sleep(3)
-    # move_z_up()
-    # origin()
-    # while (1):
-    #     print(GPIO.input(Pinmap.y_limit))
-    #     time.sleep(0.5)
-    # check_distance()
+    # # # move_z_up()
+    # # # origin()
+    # # # while (1):
+    # # #     print(GPIO.input(Pinmap.y_limit))
+    # # #     time.sleep(0.5)
+    # check_distance(result)
     # part_values=[0,0,0]
     # # closeclamp()
     # # time.sleep(2)

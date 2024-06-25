@@ -1,15 +1,30 @@
 from mqtt_utils import Mqtt_Node
 import threading
-from GPIO import *
+from GPIO_controller import *
 
 
 # global data
 prev_size=0
 size=0
 # data=[]
-broker = '192.168.137.58'
+broker = '192.168.206.204'
 port = 1883
 
+def offset(x_offset,y_offset,values):
+    values[0]=values[0]+x_offset
+    values[1]=values[1]+y_offset
+    return values
+
+def exit_handler(signal, frame):
+    global running
+    controller.running = False
+    
+    print()
+    sys.exit(0)
+
+
+# Attach a signal handler to catch SIGINT (Ctrl+C) and exit gracefully
+signal.signal(signal.SIGINT, exit_handler)
 
 if __name__=="__main__":
         client=Mqtt_Node(port,broker)
@@ -20,8 +35,9 @@ if __name__=="__main__":
         client.start_listining()
         
         controller=RPI_controller()
-        controller.change_add_sensor()
-        
+        controller.gpio_init()
+        # controller.change_add_sensor()
+        controller.sensor_restart()
         result=multiprocessing.Array('i',[0]*2)
         
         x1=multiprocessing.Process(target=controller.measure_x,args=(result,))
@@ -29,7 +45,7 @@ if __name__=="__main__":
         y1=multiprocessing.Process(target=controller.measure_y,args=(result,))
         y1.start()
         time.sleep(3)      
-        controller.origin()  
+        # controller.origin()  
         
         #run until gui is on in jetson orin
         while(not client.ack_flag):
@@ -42,28 +58,36 @@ if __name__=="__main__":
         
         while(1):
             try:
-                if(client.data>0):
+                if(len(client.data)>0):
                     coordinates=client.get_values(client.data)
-                    while(not client.ack_flag):
-                        continue
+                    print(coordinates)
+                    # while(not client.ack_flag):
+                    #     continue
                     client.ack_flag=False
                     for i in range(int(len(coordinates)/3)):
                         values=[coordinates[i*3],coordinates[(i*3)+1],coordinates[(i*3)+2]]
+                        values=offset(-5,55,values)
+                        print(values)
                         controller.move_to_position(values,result)
-                        if (client.demo_run_flag):
-                            controller.demo_cut(values[2])
-                        else:
-                            controller.cut_operation(values[2])
+                        # if (client.demo_run_flag):
+                        #     controller.demo_cut(values[2],result)
+                        # else:
+                        time.sleep(1)
+                        controller.cut_operation(values[2],result)
+                        time.sleep(2)
                     client.publish("Operation Done. Going to origin",client.ack_topic)      
-                    controller.origin()
+                    print("Operation Done. Going to origin")
+                    # controller.origin()
+                    client.data.clear()
   
             except Exception as e:
                 print(e)
                 if(e.args[0]=="Stop"):
-                    controller.origin()
-                client.publish("RPI Stopped",client.running_topic)
-                client.ack_flag=False
-            
+                    # controller.origin()
+                    client.publish("RPI Stopped",client.running_topic)
+                    client.ack_flag=False
+                    client.data.clear()
+                
             
             
             

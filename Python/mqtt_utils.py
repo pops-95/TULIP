@@ -1,6 +1,7 @@
 import random
 import json
 from paho.mqtt import client as mqtt_client
+import ast
 
 
 class Mqtt_Node():
@@ -37,7 +38,9 @@ class Mqtt_Node():
         
         if(topic==self.ack_topic):
             msg=f"Ack:{value}"
-           
+        
+        if(topic==self.running_topic):
+            msg=f"{value}"   
 
         result = self.client.publish(topic, msg)
         # result: [0, 1]
@@ -70,7 +73,7 @@ class Mqtt_Node():
     def get_values(self,cor_values):
         print(self.data)
         # print(split_string[1])
-        number_list = json.loads(cor_values)
+        number_list = ast.literal_eval(self.data[0])
         # Print the list
         # print(number_list)
         return number_list
